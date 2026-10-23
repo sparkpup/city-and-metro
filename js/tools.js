@@ -625,6 +625,7 @@
   };
   Tools.prototype.clearMeasure = function () {
     this.measure = null;
+    this.measureNeedHover = true;   // 面板 / 跳月清零后指针可能没动过（hoverSince 很旧）：置门闩，避免关面板瞬间锁定
     if (this.measureTip) { this.measureTip = null; this._dwellAt = null; this.ui.setTooltip(null); }
   };
   // 每帧：键盘平移
