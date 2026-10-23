@@ -18,6 +18,7 @@
     this.measureTip = null;       // 'dwell' = 已弹出驻留提示
     this.pointerOn = false;       // 指针是否在画布上
     this.lastPointerType = 'mouse';
+    this.measureNeedHover = false; // true = 刚右键取消，必须先移开再回来才允许重新锁定（取消要"咬住"）
     this._hoverKey = '';          // 上次记录的悬停目标键（kind:id），用于识别悬停目标变化
     this._dwellAt = null;         // 驻留提示上次弹出的指针位置（指针一动提示会被悬停逻辑清掉，需重弹）
     this.keys = new Set();
@@ -32,7 +33,7 @@
     if (this.ui.closeLinePicker) this.ui.closeLinePicker();
     this.tool = t;
     this.chain = null; this.bends = []; this.drag = null; this.hint = null; this.hover = null; this.lineLock = false;
-    this.measure = null; this.hoverSince = 0; this.measureTip = null; this._dwellAt = null; this._hoverKey = '';   // 切工具即退出测距
+    this.measure = null; this.hoverSince = 0; this.measureTip = null; this._dwellAt = null; this._hoverKey = ''; this.measureNeedHover = false;   // 切工具即退出测距
     this.ui.setTooltip(null);
     this.ui.onToolChange(t);
   };
@@ -59,6 +60,7 @@
     const k = this.hover ? this.hover.kind + ':' + this.hover.id : '';
     if (k === this._hoverKey) return;
     this._hoverKey = k;
+    this.measureNeedHover = false;   // 悬停目标已变化：右键取消后的锁定禁令解除
     this.hoverSince = (k && this.lastPointerType !== 'touch') ? U.now() : 0;
   };
   // 重新显示悬停提示（清掉驻留提示后要还原上一次 updateHover 的结论，不能一律置空以免误伤轨道/选站提示）
@@ -492,6 +494,7 @@
       const had = !!(this.measure || this.measureTip);
       this.measure = null;
       this.hoverSince = U.now();   // 不能置 0：U.now()-0 远大于 1000 会立刻重新锁定
+      this.measureNeedHover = true; // 取消要"咬住"：指针不动就不会自己复活，须移开再回来
       this.measureTip = null;
       this._dwellAt = null;
       if (had) this.showHint();
@@ -610,6 +613,7 @@
     if (!g || this.ui.blocking()) { this.clearMeasure(); return; }
     if (this.measure) return;
     if (this.tool !== 'station' || !this.pointerOn || this.lastPointerType === 'touch') return;
+    if (this.measureNeedHover) return;   // 刚右键取消：须先让悬停目标变化，避免原地自己复活
     if (!this.hoverSince) return;
     if (this.drag || (this.ptr && (this.ptr.moved || this.ptr.pan))) return;   // 拖动控制点 / 中键平移进行中不锁定
     const h = this.hover;
@@ -766,7 +770,8 @@
     if (!this.game()) return;
     const now = U.now(), net = this.net(), h = this.hover;
     // a) 驻留计时中：在被停留的车站上画扫过角进度环，并提示锁定方式
-    if (this.tool === 'station' && !this.measure && this.pointerOn && this.lastPointerType !== 'touch' &&
+    // 刚右键取消（measureNeedHover）时不画环也不提示：此时锁定被门闩挡住，画环会骗人
+    if (this.tool === 'station' && !this.measure && !this.measureNeedHover && this.pointerOn && this.lastPointerType !== 'touch' &&
         !this.ui.blocking() && this.hoverSince && h && h.kind === 'station' && net.stations[h.id]) {
       const q = R.P(net.stations[h.id].x, net.stations[h.id].y, 0);
       const t = U.clamp((now - this.hoverSince) / 1000, 0, 1);
