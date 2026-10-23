@@ -12,6 +12,14 @@
     this.chain = null; this.bends = [];
     this.cursor = null; this.hover = null; this.hint = null;
     this.ptr = null; this.drag = null;
+    // 建站工具·站点停留测距（纯运行时状态，不进存档、不进草案）
+    this.measure = null;          // 锁定态 { sid, since }；null 为未锁定
+    this.hoverSince = 0;          // 当前悬停目标起始时刻（U.now()），0 表示无
+    this.measureTip = null;       // 'dwell' = 已弹出驻留提示
+    this.pointerOn = false;       // 指针是否在画布上
+    this.lastPointerType = 'mouse';
+    this._hoverKey = '';          // 上次记录的悬停目标键（kind:id），用于识别悬停目标变化
+    this._dwellAt = null;         // 驻留提示上次弹出的指针位置（指针一动提示会被悬停逻辑清掉，需重弹）
     this.keys = new Set();
     this.bind();
   }
@@ -24,6 +32,7 @@
     if (this.ui.closeLinePicker) this.ui.closeLinePicker();
     this.tool = t;
     this.chain = null; this.bends = []; this.drag = null; this.hint = null; this.hover = null; this.lineLock = false;
+    this.measure = null; this.hoverSince = 0; this.measureTip = null; this._dwellAt = null; this._hoverKey = '';   // 切工具即退出测距
     this.ui.setTooltip(null);
     this.ui.onToolChange(t);
   };
@@ -40,8 +49,22 @@
     if (!this.game()) return;
     const net = this.net();
     if (this.chain && !net.stations[this.chain]) { this.chain = null; this.bends = []; }
+    // 测距起点在草案变化后已不存在（撤销/拆除/放弃）：清掉，避免引用悬空
+    if (this.measure && !net.stations[this.measure.sid]) { this.measure = null; this.hoverSince = U.now(); this.measureTip = null; }
     if (this.ui.linePicker && this.ui.linePicker.sid !== this.chain) this.ui.closeLinePicker();
     if (this.lineChoice !== 'new' && !net.lines[this.lineChoice]) this.lineChoice = 'new';
+  };
+  // 悬停目标（kind:id）变化时重置驻留计时；触屏没有悬停，不记录起始时刻（测距不支持触屏）
+  Tools.prototype.noteHover = function () {
+    const k = this.hover ? this.hover.kind + ':' + this.hover.id : '';
+    if (k === this._hoverKey) return;
+    this._hoverKey = k;
+    this.hoverSince = (k && this.lastPointerType !== 'touch') ? U.now() : 0;
+  };
+  // 重新显示悬停提示（清掉驻留提示后要还原上一次 updateHover 的结论，不能一律置空以免误伤轨道/选站提示）
+  Tools.prototype.showHint = function () {
+    const c = this.cursor;
+    this.ui.setTooltip(this.hint, c ? c.sx : 0, c ? c.sy : 0);
   };
 
   // ---------------- 事件绑定 ----------------
@@ -94,6 +117,7 @@
   };
   Tools.prototype.onDown = function (e) {
     const g = this.game(); if (!g || this.ui.blocking()) return;
+    this.lastPointerType = e.pointerType || 'mouse';
     try { if (this.R.cv.setPointerCapture) this.R.cv.setPointerCapture(e.pointerId); } catch (err) { /* 指针已失效时忽略 */ }
     this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, button: e.button, moved: false, shift: e.shiftKey, alt: e.altKey, t: performance.now() };
     if (e.button === 1) { this.ptr.pan = true; e.preventDefault(); return; }
@@ -108,6 +132,7 @@
   Tools.prototype.onMove = function (e) {
     const g = this.game(); if (!g) return;
     const R = this.R;
+    this.lastPointerType = e.pointerType || 'mouse';
     this.mouse = { x: e.clientX, y: e.clientY };
     if (this.ptr) {
       const dx = e.clientX - this.ptr.x, dy = e.clientY - this.ptr.y;
@@ -117,7 +142,7 @@
       else if (this.ptr.moved || this.ptr.pan) { if (CM.Follow && CM.Follow.active()) CM.Follow.stop(); R.panBy(dx, dy); this.ptr.pan = true; }
       this.ptr.x = e.clientX; this.ptr.y = e.clientY;
     }
-    if (e.target !== R.cv && !this.ptr) { this.hover = null; this.ui.setTooltip(null); return; }
+    if (e.target !== R.cv && !this.ptr) { this.hover = null; this.noteHover(); this.pointerOn = false; this.ui.setTooltip(null); return; }
     this.updateHover(e.clientX, e.clientY, e.shiftKey || e.altKey);
     if (e.pointerType === 'touch') this.ui.setTooltip(null);   // 触屏没有悬停：拖动地图时不显示提示
   };
@@ -127,7 +152,7 @@
     if (this.drag) { const ch = this.drag.changed; this.drag = null; g.endLive(ch); if (ch) sfx('place'); return; }
     if (p.extend) { if (p.moved && this.tool === 'line' && this.chain) this.onClick(e.clientX, e.clientY, false); return; }
     if (p.pan && p.moved) return;
-    if (p.button === 2) { this.onRight(e); return; }
+    if (p.button === 2) { this.onRight(e, p); return; }
     // 选择工具下点击行驶中的列车：进入跟随模式（车站优先）
     if (p.button === 0 && !p.moved && this.tool === 'select' && CM.Follow && !this.R.pickStation(e.clientX, e.clientY)) { const tr = CM.Follow.pick(e.clientX, e.clientY); if (tr) { CM.Follow.start(tr); return; } }
     if (p.button === 0 && !p.moved) this.onClick(e.clientX, e.clientY, e.shiftKey || e.altKey, e.ctrlKey || e.metaKey || e.shiftKey);
@@ -139,10 +164,12 @@
     const g = this.game(), R = this.R;
     const w = this.world(sx, sy);
     this.cursor = { sx: sx, sy: sy, x: w.x, y: w.y, mod: mod };
+    this.pointerOn = true;
     const ext = this.ptr ? null : this.pickExtend(sx, sy);
     if (ext) {
       const net0 = this.net();
       this.hover = null;
+      this.noteHover();
       this.hint = { title: '延长 ' + net0.lines[ext.line].name, lines: ['拖到目标位置松开：新建车站并连线', '点击：从「' + net0.stations[ext.station].name + '」开始逐站绘制'] };
       this.ui.setTooltip(this.hint, sx, sy);
       R.cv.style.cursor = 'grab';
@@ -151,6 +178,7 @@
     const st = R.pickStation(sx, sy);
     const seg = st ? null : R.pickSegment(sx, sy);
     this.hover = st ? { kind: 'station', id: st } : (seg ? { kind: 'seg', id: seg } : null);
+    this.noteHover();
     let tip = null;
     const net = this.net();
     if (this.tool === 'select' || this.tool === 'edit' || this.tool === 'demolish') {
@@ -457,8 +485,17 @@
     this.ui.renderToolOpts();
     return true;
   };
-  Tools.prototype.onRight = function () {
-    if (this.tool === 'line') this.endChain();
+  // 右键：绘线工具结束本次绘线；建站工具取消测距（仅纯右键，拖动平移已在 onUp 处提前返回）
+  Tools.prototype.onRight = function (e, p) {
+    if (this.tool === 'line') { this.endChain(); return; }
+    if (this.tool === 'station' && !(p && p.moved)) {
+      const had = !!(this.measure || this.measureTip);
+      this.measure = null;
+      this.hoverSince = U.now();   // 不能置 0：U.now()-0 远大于 1000 会立刻重新锁定
+      this.measureTip = null;
+      this._dwellAt = null;
+      if (had) this.showHint();
+    }
   };
   Tools.prototype.onDbl = function (e) {
     const g = this.game(); if (!g || this.tool !== 'edit') return;
@@ -566,8 +603,29 @@
     if (this.tool !== 'select') { this.setTool('select'); return; }
     this.ui.escape();
   };
+  // 每帧：测距驻留计时与锁定（跑在键盘平移的提前返回之前，保证无按键时也执行）
+  Tools.prototype.tickMeasure = function () {
+    const g = this.game();
+    // 面板 / 统计 / 网络图 / 跳月遮挡时退出测距（平移、缩放不受影响）
+    if (!g || this.ui.blocking()) { this.clearMeasure(); return; }
+    if (this.measure) return;
+    if (this.tool !== 'station' || !this.pointerOn || this.lastPointerType === 'touch') return;
+    if (!this.hoverSince) return;
+    if (this.drag || (this.ptr && (this.ptr.moved || this.ptr.pan))) return;   // 拖动控制点 / 中键平移进行中不锁定
+    const h = this.hover;
+    if (!h || h.kind !== 'station') return;
+    if (!this.net().stations[h.id]) return;
+    if (U.now() - this.hoverSince < 1000) return;
+    this.measure = { sid: h.id, since: U.now() };
+    if (this.measureTip) { this.measureTip = null; this._dwellAt = null; this.showHint(); }   // 锁定即撤掉驻留提示（指针静止时不会再有 move 来清）
+  };
+  Tools.prototype.clearMeasure = function () {
+    this.measure = null;
+    if (this.measureTip) { this.measureTip = null; this._dwellAt = null; this.ui.setTooltip(null); }
+  };
   // 每帧：键盘平移
   Tools.prototype.tick = function (dt) {
+    this.tickMeasure();
     const K = this.keys; if (!K.size || !this.game()) return;
     const sp = 600 * dt;
     let dx = 0, dy = 0;
@@ -612,6 +670,8 @@
       for (let k = 0; k <= 48; k++) { const a = k / 48 * Math.PI * 2; const p = R.P(cur.x + Math.cos(a) * r, cur.y + Math.sin(a) * r, 0); if (k) ctx.lineTo(p.x, p.y); else ctx.moveTo(p.x, p.y); }
       ctx.stroke(); ctx.setLineDash([]);
     }
+    // 建站工具·停留测距（驻留进度环 / 起点与实时米距）
+    this.drawMeasure(ctx, R);
     // 拆除预览：红色 = 将拆除；绿色虚线 = 轨道直连保留；灰色 = 失去服务的车站；橙色 = 不再换乘
     if (this.tool === 'demolish' && this.hover) {
       const imp = this.ui.demolishImpact(this.hover);
@@ -698,5 +758,69 @@
         }
       }
     }
+  };
+
+  // ---------------- 建站工具：站点停留测距 ----------------
+  // 鼠标在已建成车站上停留约 1 秒锁定测距起点，之后移动到任何位置都实时显示与起点的地理距离（米）
+  Tools.prototype.drawMeasure = function (ctx, R) {
+    if (!this.game()) return;
+    const now = U.now(), net = this.net(), h = this.hover;
+    // a) 驻留计时中：在被停留的车站上画扫过角进度环，并提示锁定方式
+    if (this.tool === 'station' && !this.measure && this.pointerOn && this.lastPointerType !== 'touch' &&
+        !this.ui.blocking() && this.hoverSince && h && h.kind === 'station' && net.stations[h.id]) {
+      const q = R.P(net.stations[h.id].x, net.stations[h.id].y, 0);
+      const t = U.clamp((now - this.hoverSince) / 1000, 0, 1);
+      ctx.save();
+      ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2; ctx.lineCap = 'round';
+      ctx.beginPath(); ctx.arc(q.x, q.y, 17, -Math.PI / 2, -Math.PI / 2 + Math.PI * 2 * t); ctx.stroke();   // 半径沿用高亮环 13px + 4px
+      ctx.restore();
+      // 指针一动，悬停逻辑就会清掉提示；因此按指针位置变化重弹，静止时不重复调用
+      const sx = this.cursor ? this.cursor.sx : q.x, sy = this.cursor ? this.cursor.sy : q.y;
+      if (!this._dwellAt || this._dwellAt.x !== sx || this._dwellAt.y !== sy) {
+        this.ui.setTooltip({ title: '保持不动 1 秒锁定测距起点 · 右键取消', lines: [] }, sx, sy);
+        this.measureTip = 'dwell'; this._dwellAt = { x: sx, y: sy };
+      }
+    } else if (this.measureTip) { this.measureTip = null; this._dwellAt = null; this.showHint(); }
+    // b) 测量态：起点标记 + 起点到端点的虚线 + 中点米数
+    const m = this.measure;
+    if (!m) return;
+    const s = net.stations[m.sid];
+    if (!s) { this.measure = null; this.hoverSince = U.now(); this.measureTip = null; this._dwellAt = null; return; }   // 起点已不存在：自愈退出
+    const a = R.P(s.x, s.y, 0);
+    const hs = h && h.kind === 'station' ? net.stations[h.id] : null;   // 端点吸附已建成车站中心 → 精确站间距
+    const ex = hs ? hs.x : (this.cursor ? this.cursor.x : null), ey = hs ? hs.y : (this.cursor ? this.cursor.y : null);
+    const b = ex == null ? null : R.P(ex, ey, 0);
+    ctx.save();
+    ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+    const showLine = !!b && this.pointerOn;   // 指针不在画布上时只留起点
+    if (showLine) {   // 先白后彩：白光晕承托，深石板虚线在内
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+      ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 5; ctx.stroke();
+      ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2; ctx.setLineDash([7, 5]); ctx.stroke(); ctx.setLineDash([]);
+    }
+    // 起点标记：白描边光晕 + 深石板环 + 中心小点
+    ctx.beginPath(); ctx.arc(a.x, a.y, 11, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.9)'; ctx.lineWidth = 5; ctx.stroke();
+    ctx.strokeStyle = '#2d3436'; ctx.lineWidth = 2; ctx.stroke();
+    ctx.fillStyle = '#2d3436'; ctx.beginPath(); ctx.arc(a.x, a.y, 2.6, 0, Math.PI * 2); ctx.fill();
+    // 读数同样只在指针位于画布上时绘制
+    if (showLine) {
+      const txt = U.fmtInt(Math.round(U.dist(s.x, s.y, ex, ey) * CFG.CELL_M)) + ' m';   // 始终用米，不做 km 切换
+      ctx.font = 'bold 11px sans-serif';
+      const pw = ctx.measureText(txt).width + 12, ph = 18, rr = ph / 2;
+      const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2 - 14;   // 线段屏幕中点略上方
+      const x0 = mx - pw / 2, y0 = my - ph / 2;
+      ctx.beginPath();
+      if (ctx.roundRect) ctx.roundRect(x0, y0, pw, ph, rr);
+      else {
+        ctx.moveTo(x0 + rr, y0); ctx.lineTo(x0 + pw - rr, y0); ctx.arc(x0 + pw - rr, y0 + rr, rr, -Math.PI / 2, Math.PI / 2);
+        ctx.lineTo(x0 + rr, y0 + ph); ctx.arc(x0 + rr, y0 + rr, rr, Math.PI / 2, Math.PI * 1.5); ctx.closePath();
+      }
+      ctx.fillStyle = 'rgba(255,255,255,0.92)'; ctx.fill();
+      ctx.strokeStyle = 'rgba(45,52,54,0.55)'; ctx.lineWidth = 1; ctx.stroke();
+      ctx.fillStyle = '#2d3436'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(txt, mx, my + 0.5);
+    }
+    ctx.restore();
   };
 })(window.CM);
