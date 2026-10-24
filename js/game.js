@@ -56,19 +56,40 @@
   };
 
   // 开局时已运营的真实地铁：直接属于玩家，不收取历史建设费；之后正常产生运营费用与票款，可改造、扩建或拆除
+  // 两条规则容易漏且都是静默失真（不报错、结果不对）：
+  //   1) 站名相同 = 同一个物理换乘站：跨线复用一个 sid，否则会生成重叠的独立站，玩家看到多圈叠着且互不换乘；
+  //   2) 环线（L.loop）必须回到首站闭合，否则变成开口弧。
   function buildInitialNetwork(g) {
     const IN = D.initialNetwork; if (!IN) return null;
     const net = g.net, city = g.city, desc = [];
+    const RANK = { S: 0, M: 1, L: 2 };                       // 站台规模只升不降
+    const byName = new Map();                                 // 站名 → sid：继承网络的换乘站复用表（跨线路共享）
     for (const L of IN.lines) {
       const lid = M.newLine(net);
       if (L.color) net.lines[lid].color = L.color;
       if (L.name) net.lines[lid].name = L.name;
-      let prev = null;
+      let prev = null, firstSid = null;
       for (const st of L.stations) {
-        const sid = M.addStation(net, st[1], st[2], { size: st[3] || L.size || 'M', type: L.type || 'underground' }, city);
-        const s = net.stations[sid]; s.name = st[0]; s.built = [st[4] || L.year || CFG.START.y, 1]; s.site = [s.x, s.y]; s.inherited = true;
+        let sid = byName.get(st[0]);
+        if (sid == null) {
+          sid = M.addStation(net, st[1], st[2], { size: st[3] || L.size || 'M', type: L.type || 'underground' }, city);
+          byName.set(st[0], sid);
+        } else {
+          const s0 = net.stations[sid];                       // 换乘站：前一条线已建过，只合并属性，不新建
+          if (st[3] && (RANK[st[3]] || 0) > (RANK[s0.size] || 0)) s0.size = st[3];
+          if ((L.type || 'underground') === 'underground') s0.type = 'underground';   // 地下线穿过高架站时以地下为准
+        }
+        const s = net.stations[sid], by = st[4] || L.year || CFG.START.y;
+        s.name = st[0];
+        s.built = s.built ? [Math.min(s.built[0], by), 1] : [by, 1];   // 复用站取更早的建成年
+        s.site = [s.x, s.y]; s.inherited = true;
         if (prev) M.addSegment(net, lid, prev, sid, [], L.type || 'underground');
+        else firstSid = sid;
         prev = sid;
+      }
+      // 环线闭合：首尾同名时去重后 prev === firstSid（本身已闭合）；addSegment 会以 a===b 拒收，故须先判等
+      if (L.loop && L.stations.length >= 3 && prev && firstSid && prev !== firstSid) {
+        M.addSegment(net, lid, prev, firstSid, [], L.type || 'underground');
       }
       desc.push(net.lines[lid].name + ' ' + L.stations[0][0] + '—' + L.stations[L.stations.length - 1][0] + '（' + L.stations.length + ' 站）');
     }
