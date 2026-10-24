@@ -202,7 +202,9 @@ for (const el of els.values()) {
   if (t.leisure === 'park') { const { outer, inner } = polyRings(el); const rs = outer.filter((r) => r.length >= 8).map((r) => 'o' + enc(r)).concat(inner.filter((r) => r.length >= 8).map((r) => 'i' + enc(r))); if (rs.length) { parks.push([nid(t.name || ''), ...rs]); count.parks++; } else { stat.dropShort++; count.dropped++; } continue; }
   if (t.landuse === 'forest' || t.natural === 'wood' || t.natural === 'scrub') { const { outer, inner } = polyRings(el); const rs = outer.filter((r) => r.length >= 8).map((r) => 'o' + enc(r)).concat(inner.filter((r) => r.length >= 8).map((r) => 'i' + enc(r))); if (rs.length) { woods.push([nid(t.name || ''), ...rs]); count.woods++; } else { stat.dropShort++; count.dropped++; } continue; }
   if (t.boundary === 'protected_area' || t.leisure === 'nature_reserve') { const { outer, inner } = polyRings(el); const rs = outer.filter((r) => r.length >= 8).map((r) => 'o' + enc(r)).concat(inner.filter((r) => r.length >= 8).map((r) => 'i' + enc(r))); if (rs.length) { reserves.push([nid(t.name || ''), ...rs]); count.reserves++; } else { stat.dropShort++; count.dropped++; } continue; }
-  if (t.railway === 'rail' || t.railway === 'light_rail') {                                   // ---- 铁路 ----
+  // ---- 铁路 ----（monorail 也收：上海磁浮在 OSM 里是 railway=monorail + monorail=maglev，
+  // 只认 rail/light_rail 会把整条磁浮丢掉，表现为「图东侧根本没有那条线」）
+  if (t.railway === 'rail' || t.railway === 'light_rail' || t.railway === 'monorail') {
     const flags = (t.bridge && t.bridge !== 'no' ? 1 : 0) | (t.tunnel && t.tunnel !== 'no' ? 2 : 0) | (t.embankment && t.embankment !== 'no' ? 4 : 0) | (t.highspeed === 'yes' ? 16 : 0);
     const pts = thin(projectPts(el.geometry));
     if (pts.length < 4) { stat.dropShort++; count.dropped++; continue; }
@@ -281,10 +283,10 @@ lines.push('    streets: ' + qss(streets.join('!')) + ',');
 // 铁路开通年份（按线路名精确匹配，写进 rail 行第 4 字段）。
 // geo.js:59 读 year、render.js:682 决定画不画、city.js:569 决定是否激活并阻隔步行、game.js:177 到点触发步行图重建。
 // 不写 = year 0 = 从开局就存在。只给「开局年之后才通车」的线路写。
-// 已知偏差：上海磁悬浮在 OSM 里没有 name 标签，无法按名匹配，故 1993 开局时图东侧会有一条无名铁路提前存在
-// （纯视觉，不产生客流：rail 层不参与模拟出行，只阻隔步行；影响 1993-2001 共 8 年）。
+// 上海磁悬浮在 OSM 里是 railway=monorail + monorail=maglev，line 的 name 是「上海磁浮示范运营线」，
+// 2002-12 通车，所以写 year 2002：1993 开局时图上看不到，到 2002 年才出现。
 const RAIL_YEARS = {
-  sh: { '市域铁机场联络线': 2024, '沪宁城际线': 2010, '沪杭客专': 2010, '金山铁路': 2012, '京沪高铁': 2011, '沪苏湖高铁': 2024 },
+  sh: { '上海磁浮示范运营线': 2002, '市域铁机场联络线': 2024, '沪宁城际线': 2010, '沪杭客专': 2010, '金山铁路': 2012, '京沪高铁': 2011, '沪苏湖高铁': 2024 },
 };
 const railYearOf = (nameIdx) => {
   const tbl = RAIL_YEARS[city.id];
