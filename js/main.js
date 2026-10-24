@@ -128,16 +128,20 @@
   CM.newGame = function (opts) {
     if (CM.Soundscape) CM.Soundscape.reset();
     const mp = CM.MAPS[opts.map] || CM.MAPS.gz;
-    ui.showLoading('正在生成 ' + mp.cfg.START.y + ' 年的' + mp.data.city + '，并计算居民出行…');
+    // 年代：先解析（不切图）拿到真实开局年，避免加载提示报该图基准年而实际开在别的年代
+    const st = CM.resolveStart ? CM.resolveStart(mp, opts.startId) : null;
+    ui.showLoading('正在生成 ' + ((st && st.START && st.START.y) || mp.cfg.START.y) + ' 年的' + mp.data.city + '，并计算居民出行…');
     setTimeout(function () {
-      try { CM.useMap(mp.id); start(CM.Game.create(opts), true); } catch (e) { CM.useMap(CM.game ? CM.game.mapId : 'gz'); fail(e, '创建新游戏'); }
+      try { CM.useMap(mp.id, opts.startId); start(CM.Game.create(opts), true); } catch (e) { CM.useMap(CM.game ? CM.game.mapId : 'gz', CM.game && CM.game.startId); fail(e, '创建新游戏'); }
     }, 60);
   };
   CM.loadGame = function (data) {
     if (CM.Soundscape) CM.Soundscape.reset();
     ui.showLoading('正在载入存档并恢复城市与交通状态…');
     setTimeout(function () {
-      try { CM.useMap((data.meta && data.meta.map) || 'gz'); start(CM.Game.restore(data), false); } catch (e) { CM.useMap(CM.game ? CM.game.mapId : 'gz'); fail(e, '载入存档'); }
+      const meta = data.meta || {};
+      // 存档记录的开局年代必须一并还原：同一张图的不同年代 START 与 initialNetwork 不同
+      try { CM.useMap(meta.map || 'gz', meta.startId); start(CM.Game.restore(data), false); } catch (e) { CM.useMap(CM.game ? CM.game.mapId : 'gz', CM.game && CM.game.startId); fail(e, '载入存档'); }
     }, 60);
   };
   CM.endGame = function () {

@@ -23,6 +23,7 @@
     const g = new Game();
     g.id = U.uid('g');
     g.mapId = CM.mapId || 'gz';   // 当前地图（CM.useMap 已切换好数据）
+    g.startId = (CM.curMap && CM.curMap().activeStart) || null;   // 开局年代（该图未声明 starts 时为 null）
     g.name = opts.name || ((D.city || '广州') + ' ' + CFG.START.y);
     g.mode = opts.mode;
     g.seed = opts.seed || (CFG.START.y * 10000 + 101);
@@ -588,7 +589,9 @@
   // ---------------- 存档 ----------------
   Game.prototype.serialize = function () {
     return {
-      meta: { gameId: this.id, name: this.name, mode: this.mode, seed: this.seed, createdAt: this.createdAt, gameVersion: CFG.GAME_VERSION, map: this.mapId || 'gz', mapVersion: (CM.MAPS[this.mapId || 'gz'] || {}).mapVersion || 1, scenario: (CM.MAPS[this.mapId || 'gz'] || {}).scenario || '', mapFp: (CM.MAPS[this.mapId || 'gz'] || {}).fp || '' },
+      meta: { gameId: this.id, name: this.name, mode: this.mode, seed: this.seed, createdAt: this.createdAt, gameVersion: CFG.GAME_VERSION, map: this.mapId || 'gz', mapVersion: (CM.MAPS[this.mapId || 'gz'] || {}).mapVersion || 1, scenario: (CM.MAPS[this.mapId || 'gz'] || {}).scenario || '', startId: this.startId || null,
+        // 存档指纹：地图级 m.fp（标识地理数据，不含年代）+ 开局年代，避免同一张图的不同年代判为同一存档来源
+        mapFp: ((CM.MAPS[this.mapId || 'gz'] || {}).fp || '') + '|' + (this.startId || '-') },
       clock: Object.assign({}, this.clock),
       city: this.city.serialize(),
       net: this.net,
@@ -610,6 +613,7 @@
     const m = s.meta;
     g.id = m.gameId; g.name = m.name; g.mode = m.mode; g.seed = m.seed; g.createdAt = m.createdAt;
     g.mapId = m.map || 'gz';   // 调用前 CM.useMap 已切换到该地图
+    g.startId = m.startId || (CM.curMap && CM.curMap().activeStart) || null;   // 旧存档无 startId → 落到当前图的 activeStart
     if (s.tutorial) g.tutorial = s.tutorial;
     g.clock = Object.assign({}, s.clock);
     g.city = new CM.City();

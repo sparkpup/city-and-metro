@@ -95,11 +95,35 @@
     if (rest.length) out.push({ mode: CM.MAP_MODES.filter(function (m) { return m.implicit; })[0], ids: rest });
     return out;
   };
+  // ---- 开局年代（starts）：同一张图的多个时代入口 ----
+  // 条目字段：id / label / sub / START（覆盖该图 START 的字段）/ initialNetwork（null = 从零开始）/ status（'planned' = 未开放）
+  // 未声明 starts 的地图完全走原路：pickStart 返回 null，m.cfg / m.data 一律不动，行为与加本机制前一致。
+  function pickStart(m, startId) {
+    const list = m.starts;
+    if (!list || !list.length) return null;
+    const find = function (sid) { for (const s of list) if (s.id === sid) return s; return null; };
+    let st = startId ? find(startId) : null;                      // 显式请求优先（planned 也照给，由界面决定是否可选）
+    // defaultStart 不能指向未开放项：planned 的语义就是「别自动用」，否则配置一处写错，
+    // 玩家开新局会直接进一个设计上还没做完的年代，且不报错（实测踩到）。
+    if (!st && m.defaultStart) { const d = find(m.defaultStart); if (d && d.status !== 'planned') st = d; }
+    if (!st) { for (const s of list) if (s.status !== 'planned') { st = s; break; } }
+    return st || list[0] || null;
+  }
+  CM.resolveStart = pickStart;   // 供界面/加载提示在切换之前读出年代（不改全局状态）
   CM.mapId = 'gz';
-  CM.useMap = function (id) {
+  CM.useMap = function (id, startId) {
     const m = MAPS[id] || MAPS.gz;
-    if (CM.mapId === m.id && CM.GEO === m.geo) return m;
+    const st = pickStart(m, startId), stId = st ? st.id : null;
+    // 早退条件必须含年代：同一张图换年代要重新应用 START 与 initialNetwork
+    if (CM.mapId === m.id && CM.GEO === m.geo && (m.activeStart || null) === stId) return m;
     CM.mapId = m.id;
+    // 年代先落到「该图自己的」配置与数据上（m.cfg.START 本来就是每图覆盖全局 CFG.START 的通道），
+    // 于是 game.js 的 g.clock = CFG.START 与 buildInitialNetwork 读 D.initialNetwork 都不用感知 starts。
+    if (st) {
+      m.cfg.START = Object.assign({}, m.cfg.START, st.START || {});
+      m.data.initialNetwork = st.initialNetwork || null;
+    }
+    m.activeStart = stId;
     for (const k of Object.keys(CM.DATA)) delete CM.DATA[k];
     Object.assign(CM.DATA, m.data);
     CM.GEO = m.geo;
@@ -108,7 +132,7 @@
     if (CM.Metro && CM.Metro.clearCaches) CM.Metro.clearCaches();
     return m;
   };
-  CM.curMap = function () { return MAPS[CM.mapId] || MAPS.gz; };
+  CM.curMap = function () { return MAPS[CM.mapId] || MAPS.gz; };   // 含 activeStart，界面直接读
 
   // 地图缩略图：水系、主要道路与铁路（不切换当前地图，直接解码该地图的数据），按主题配色，结果缓存
   const thumbs = {};
