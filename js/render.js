@@ -699,13 +699,19 @@
     }
     // 主要道路（已通车）
     const ways = city.roadWayBk ? Geo.query(city.roadWayBk, X0 - 0.5, Y0 - 0.5, X1 + 0.5, Y1 + 0.5) : [];
-    const lay = { 2: [], 3: [], 4: [] }, links = [], tunnels = [];
+    const lay = { 2: [], 3: [], 4: [] }, links = [], tunnels = [], minor = [];
     for (const k of ways) {
       const w = city.roadWays[k];
       if (!city.roadsBuilt[w.g]) continue;
       const gr = city.roadGroups[w.g];
-      if (gr.flags & 2) tunnels.push(w); else if (gr.flags & 4) links.push(w); else lay[gr.cls].push(w);
+      // cls 1 = 支路（等级名表见 pages.js），和街道同层画出；未知等级兜底到次干道。
+      // 缺任何一档都不能让 drawGround 抛异常——那会让整幅地面栅格画不出来、城市看着空空如也。
+      if (gr.flags & 2) tunnels.push(w);
+      else if (gr.flags & 4) links.push(w);
+      else if (gr.cls < 2) minor.push(w);
+      else (lay[gr.cls] || lay[2]).push(w);
     }
+    if (minor.length && lvl >= 16) for (const w of minor) st.addPath(this.featurePath(w, false));
     const path = (arr) => { const p = new Path2D(); for (const w of arr) p.addPath(this.featurePath(w, false)); return p; };
     const bridgePath = (arr) => { const p = new Path2D(); for (const w of arr) if (city.roadGroups[w.g].flags & 1) p.addPath(this.featurePath(w, false)); return p; };
     const P2 = path(lay[2]), P3 = path(lay[3]), P4 = path(lay[4]), PL = path(links), PT = path(tunnels);
