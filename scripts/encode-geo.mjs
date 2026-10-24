@@ -278,7 +278,21 @@ lines.push('    roads: [' + roads.map((r) => '[' + r[0] + ',' + r[1] + ',' + r[2
 // 浏览器加载 geo_xa.js 直接 SyntaxError 白屏。这里按 JS 单引号字面量规则转义 \ 和 '。
 const qss = (s) => "'" + s.replace(/\\/g, '\\\\').replace(/'/g, "\\'") + "'";
 lines.push('    streets: ' + qss(streets.join('!')) + ',');
-lines.push('    rail: [' + rail.map((r) => '[' + r[0] + ',' + r[1] + ',' + q(r[2]) + ']').join(',') + '],');
+// 铁路开通年份（按线路名精确匹配，写进 rail 行第 4 字段）。
+// geo.js:59 读 year、render.js:682 决定画不画、city.js:569 决定是否激活并阻隔步行、game.js:177 到点触发步行图重建。
+// 不写 = year 0 = 从开局就存在。只给「开局年之后才通车」的线路写。
+// 已知偏差：上海磁悬浮在 OSM 里没有 name 标签，无法按名匹配，故 1993 开局时图东侧会有一条无名铁路提前存在
+// （纯视觉，不产生客流：rail 层不参与模拟出行，只阻隔步行；影响 1993-2001 共 8 年）。
+const RAIL_YEARS = {
+  sh: { '市域铁机场联络线': 2024, '沪宁城际线': 2010, '沪杭客专': 2010, '金山铁路': 2012, '京沪高铁': 2011, '沪苏湖高铁': 2024 },
+};
+const railYearOf = (nameIdx) => {
+  const tbl = RAIL_YEARS[city.id];
+  if (!tbl) return 0;
+  const nm = names[nameIdx] || '';
+  return tbl[nm] || 0;
+};
+lines.push('    rail: [' + rail.map((r) => { const y = railYearOf(r[0]); return '[' + r[0] + ',' + r[1] + ',' + q(r[2]) + (y ? ',' + y : '') + ']'; }).join(',') + '],');
 lines.push('    parks: [' + parks.map((r) => '[' + r.map((v) => (typeof v === 'number' ? v : q(v))).join(',') + ']').join(',') + '],');
 lines.push('    reserves: [' + reserves.map((r) => '[' + r.map((v) => (typeof v === 'number' ? v : q(v))).join(',') + ']').join(',') + '],');
 lines.push('    woods: [' + woods.map((r) => '[' + r.map((v) => (typeof v === 'number' ? v : q(v))).join(',') + ']').join(',') + '],');
