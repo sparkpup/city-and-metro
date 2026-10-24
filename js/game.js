@@ -370,6 +370,7 @@
   Game.prototype.cancelDraft = function () {
     if (!this.draft) return;
     this.model.cancelPredict();
+    if (this._sim) this._sim.cancelPredict();
     this.draft = null;
     this.emit('draft');
   };
@@ -440,7 +441,7 @@
   Game.prototype.invalidatePrediction = function (msg) {
     const d = this.draft; if (!d) return;
     d.autoVer = null;   // 票价、月份等外部条件变化时，即使草案版本没变也要允许自动重算。
-    if (d.pred.state === 'running') this.model.cancelPredict();
+    if (d.pred.state === 'running') { this.model.cancelPredict(); if (this._sim) this._sim.cancelPredict(); }
     if (d.pred.state !== 'idle') d.pred = { state: 'stale', msg: msg || '草案已修改，预测需要重新计算', last: d.pred.result || d.pred.last };
     this.emit('prediction');
   };
@@ -455,15 +456,84 @@
     const ver = d.ver;
     const affected = Array.from(ev.affectedLines);
     const self = this;
-    d.pred = { state: 'running', progress: 0, ver: ver };
+    // 分流：CFG.perf.useWorker 打开且 Worker 握手成功时走 SimClient（预测搬到 Worker，主线程不卡）；
+    // 否则（含 Worker 不可用 / 握手失败 / 请求报错的降级）走原有的主线程 model.predict。
+    const sim = this.simClient();
+    if (sim && this._simOk) {
+      d.pred = { state: 'running', progress: 0, ver: ver };
+      this.emit('prediction');
+      // 只在 Worker 的城市状态落后时才把 city 塞进消息体（克隆约 137ms，被后续 2.4~3.9s 的异步等待吸收）；
+      // 同月内多次预测只传一次。比对依据 = Worker 上次 ack 回传的 cityVersion / roadVersion。
+      const ci = this.city, wi = sim.info;
+      const staleCity = !wi || wi.cityVersion !== ci.version || wi.roadVersion !== ci.roadVersion;
+      sim.sync({ net: this.compiled, fare: this.model.fare, year: this.model.year, dayType: this.model.dayType,
+        city: staleCity ? ci : null })
+        .then(function () {
+          return sim.predict(C, affected, {
+            timeout: CFG.perf.workerTimeoutMs || 60000,
+            onProgress: function (p) {
+              if (!self.draft || self.draft.ver !== ver) return;
+              if (self.draft.pred && self.draft.pred.state === 'running') { self.draft.pred.progress = p; self.emit('prediction'); }
+            },
+          });
+        })
+        .then(function (res) {
+          if (!self.draft || self.draft.ver !== ver) return;      // 过期保护：与主线程路径同一口径
+          if (!res) throw new Error('预测无结果');
+          res.conditions.y = self.clock.y; res.conditions.m = self.clock.m;
+          self.draft.pred = { state: 'done', result: res, ver: ver };
+          self.emit('prediction');
+        })
+        .catch(function (e) {
+          if (e && e.cancelled) return;
+          self._simOk = false; self._simErr = (e && e.message) || String(e);
+          if (!self.draft || self.draft.ver !== ver) return;
+          self.localPredict(C, affected, ver);                     // 降级：回到主线程路径重算一次
+        });
+      return;
+    }
+    this.localPredict(C, affected, ver);
+  };
+
+  // 主线程预测：原有路径（model.predict 生成器由 Game.update → model.step 分帧驱动）
+  Game.prototype.localPredict = function (C, affected, ver) {
+    const self = this;
+    this.draft.pred = { state: 'running', progress: 0, ver: ver };
     const gen = this.model.predict(C, affected, function (res) {
       if (!self.draft || self.draft.ver !== ver) return;
       res.conditions.y = self.clock.y; res.conditions.m = self.clock.m;
       self.draft.pred = { state: 'done', result: res, ver: ver };
       self.emit('prediction');
     });
-    d.pred.gen = gen;
+    this.draft.pred.gen = gen;
     this.emit('prediction');
+  };
+
+  // 预测 Worker 客户端：惰性创建，开关关闭 / 环境不支持时返回 null（完全走原路径）
+  Game.prototype.simClient = function () {
+    if (this._sim !== undefined) return this._sim;
+    const self = this;
+    if (!CFG.perf.useWorker || !CM.SimClient || !CM.SimClient.isSupported()) { this._sim = null; return null; }
+    let c = null;
+    try {
+      c = CM.SimClient.create({
+        model: this.model,                                        // 降级用的主线程权威模型
+        timeout: CFG.perf.workerTimeoutMs || 60000,
+        handshakeTimeout: CFG.perf.workerHandshakeMs || 20000,
+      });
+    } catch (e) { this._sim = null; this._simErr = (e && e.message) || String(e); return null; }
+    if (c.mode !== 'worker') { this._sim = null; this._simErr = c.failReason || 'Worker 不可用'; return null; }
+    this._sim = c;
+    this._simOk = false;
+    c.init({ mapId: this.mapId, seed: this.seed, clock: { y: this.clock.y, m: this.clock.m, d: this.clock.d },
+      year: this.model.year, dayType: this.model.dayType, fare: this.model.fare, net: this.compiled })
+      .then(function (info) { self._simOk = true; self._simInfo = info; })
+      .catch(function (e) {
+        self._simOk = false; self._simErr = (e && e.message) || String(e);
+        self._sim = null;
+        try { c.terminate(); } catch (e2) { /* ignore */ }
+      });
+    return c;
   };
 
   // ---------------- 查询 ----------------
