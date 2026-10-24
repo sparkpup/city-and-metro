@@ -62,9 +62,18 @@
 
   // ======================== 选择地图 ========================
   UI.prototype.showMapSelect = function (selId) {
-    const self = this, all = CM.MAP_ORDER.slice();
+    const self = this;
+    // 渲染序 = CM.mapGroups() 的扁平序：外层按模式（组间 sort 升序），组内保持 MAP_ORDER 的难度升序。
+    // 单组时（当前只有兜底组「经典地图」）结果与 CM.MAP_ORDER.slice() 逐项相同，DOM 与加分组前一致。
+    // 这个扁平序同时是键盘 ↑↓ 的遍历序，所以它必须与视觉顺序一致。
+    const groups = CM.mapGroups();
+    const all = [], groupOf = {};
+    for (const g of groups) for (const id of g.ids) { all.push(id); groupOf[id] = g.mode.id; }
     let sel = selId && CM.MAPS[selId] ? selId : (this._mapSel && CM.MAPS[this._mapSel] ? this._mapSel : all[0]);
-    const F = this._mapFilter || (this._mapFilter = { q: '', era: 'all', region: 'all' });
+    const F = this._mapFilter || (this._mapFilter = { q: '', era: 'all', region: 'all', collapsed: {} });
+    if (!F.collapsed) F.collapsed = {};
+    // 模式的 expanded:false 只在首次进入时生效；用户点过之后以 F.collapsed 为准（不落盘、不跨会话）
+    for (const g of groups) if (g.mode.expanded === false && F.collapsed[g.mode.id] === undefined) F.collapsed[g.mode.id] = true;
     if (selId) { F.q = ''; F.era = 'all'; F.region = 'all'; }
     const theme = document.documentElement.dataset.theme === 'dark' ? 'dark' : 'light';
     const eras = Array.from(new Set(all.map(function (id) { return eraOf(CM.MAPS[id]); }))).sort();
@@ -107,23 +116,47 @@
       if (F.q) { const t = text(mp); for (const w of F.q.toLowerCase().split(/\s+/)) if (w && t.indexOf(w) < 0) return false; }
       return true;
     };
-    for (const id of all) {
-      const mp = CM.MAPS[id], n = CM.Save.list(id).length;
-      const it = h('button', { class: 'msel-item', role: 'option', 'data-id': id, onclick: function () { pick(id); }, ondblclick: function () { pick(id); const p = detail.querySelector('.map-mode.primary'); if (p) p.click(); } },
-        h('span', { class: 'msel-thumb' }, h('img', { alt: '', src: CM.mapThumb(id, theme) || '' }), mp.tutorial ? h('span', { class: 'msel-flag' }, '教程') : null),
-        h('span', { class: 'msel-it' },
-          h('b', null, mp.title || mp.name),
-          h('small', null, mp.tagline || mp.sub),
-          h('span', { class: 'msel-meta' }, h('span', { class: 'tag' }, mp.region || ''), levelEl(mp.difficulty || 2), n ? h('span', { class: 'msel-prog' }, ic('save', 12), n + ' 个进度') : null)));
-      items[id] = it; list.appendChild(it);
+    // 组头：单组时不建任何组头节点（groups.length < 2），DOM 与加分组前逐节点一致
+    const heads = {};
+    for (const g of groups) {
+      if (groups.length > 1) {
+        const hd = h('button', { class: 'msel-group', type: 'button', 'data-g': g.mode.id, 'aria-expanded': 'true',
+          onclick: function () { const k = g.mode.id; F.collapsed[k] = !F.collapsed[k]; snd('soft'); drawList(); } },
+          h('span', { class: 'chev' }, ic('chev', 14)), h('b', null, g.mode.name),
+          h('small', null, g.mode.sub || ''), h('i', null, String(g.ids.length)));
+        heads[g.mode.id] = hd; list.appendChild(hd);
+      }
+      for (const id of g.ids) {
+        const mp = CM.MAPS[id], n = CM.Save.list(id).length;
+        const it = h('button', { class: 'msel-item', role: 'option', 'data-id': id, onclick: function () { pick(id); }, ondblclick: function () { pick(id); const p = detail.querySelector('.map-mode.primary'); if (p) p.click(); } },
+          h('span', { class: 'msel-thumb' }, h('img', { alt: '', src: CM.mapThumb(id, theme) || '' }), mp.tutorial ? h('span', { class: 'msel-flag' }, '教程') : null),
+          h('span', { class: 'msel-it' },
+            h('b', null, mp.title || mp.name),
+            h('small', null, mp.tagline || mp.sub),
+            h('span', { class: 'msel-meta' }, h('span', { class: 'tag' }, mp.region || ''), levelEl(mp.difficulty || 2), n ? h('span', { class: 'msel-prog' }, ic('save', 12), n + ' 个进度') : null)));
+        items[id] = it; list.appendChild(it);
+      }
     }
     list.appendChild(empty);
     const drawList = function () {
-      let shown = 0;
-      for (const id of all) { const ok = match(id); items[id].classList.toggle('hidden-el', !ok); if (ok) shown++; }
-      empty.classList.toggle('hidden-el', shown > 0);
-      count.textContent = shown === all.length ? '共 ' + all.length + ' 张地图' : '找到 ' + shown + ' / ' + all.length + ' 张';
-      // 当前选中的地图被筛掉时，选中第一张可见的地图
+      let shown = 0, hit = 0;
+      const matched = {};   // modeId → 通过筛选的城市数（不含折叠，用于决定组头是否该出现）
+      for (const id of all) {
+        const gid = groupOf[id], m = match(id), fold = !!F.collapsed[gid];
+        if (m) { hit++; matched[gid] = (matched[gid] || 0) + 1; }
+        const ok = m && !fold;
+        items[id].classList.toggle('hidden-el', !ok);
+        if (ok) shown++;
+      }
+      // 折叠态：组内 0 命中就藏组头；只剩折叠导致的隐藏时组头必须留着，否则无法展开
+      for (const gid in heads) {
+        heads[gid].classList.toggle('hidden-el', !(matched[gid] || 0));
+        heads[gid].classList.toggle('closed', !!F.collapsed[gid]);
+        heads[gid].setAttribute('aria-expanded', F.collapsed[gid] ? 'false' : 'true');
+      }
+      empty.classList.toggle('hidden-el', hit > 0);
+      count.textContent = hit === all.length ? '共 ' + all.length + ' 张地图' : '找到 ' + hit + ' / ' + all.length + ' 张';
+      // 当前选中的地图被筛掉（或所在组被折叠）时，选中第一张可见的地图
       if (shown && items[sel].classList.contains('hidden-el')) { const first = all.find(function (id) { return !items[id].classList.contains('hidden-el'); }); if (first) pick(first, true); }
     };
 
@@ -200,7 +233,7 @@
     const left = h('div', { class: 'msel-left' },
       h('div', { class: 'msel-head' }, h('button', { class: 'iconbtn', 'data-tip': '返回主菜单', 'data-key': 'Esc', onclick: back }, ic('back')), h('h2', null, '选择地图'), h('span', { class: 'grow' }), count),
       h('div', { class: 'msel-filterbox' }, h('div', { class: 'msel-search' }, ic('search', 16), search, clear), filters),
-      h('div', { class: 'msel-lh' }, ic('map', 14), '地图', h('span', { class: 'tiny muted' }, '由易到难 · ↑↓ 切换 · Enter 开始')),
+      h('div', { class: 'msel-lh' }, ic('map', 14), '地图', h('span', { class: 'tiny muted' }, '按模式分组 · 组内由易到难 · ↑↓ 切换 · Enter 开始')),
       list,
       h('div', { class: 'msel-note' }, '每张地图的进度与存档各自独立；进入游戏时默认暂停，可以先规划线路。'));
     const card = h('div', { class: 'card msel', tabindex: '-1' }, left, detail);

@@ -56,6 +56,45 @@
   CM.MAP_ORDER = mapOrder.filter(function (id) { return MAPS[id]; }).sort(function (a, b) {
     return (MAPS[a].difficulty || 2) - (MAPS[b].difficulty || 2) || mapRank.get(a) - mapRank.get(b);
   });
+  // ---- 地图游玩模式（分组）----
+  // 只描述「哪些城市归到同一个入口」，是 CM.MAP_ORDER 的只读派生视图；
+  // 不改变 CM.MAPS / CM.MAP_LIST / CM.MAP_ORDER 三个既有契约。
+  // 字段：id 唯一键 / name 组标题 / sub 副标题 / ids 成员城市 id（一城单归属，先到先得）
+  //      / expanded 默认展开 / sort 组间升序（小的在上）/ status 筹备状态 / force 强制可见
+  const MODES = [
+    { id: 'east', name: '长三角都市圈', sub: '苏州 · 上海 · 无锡 · 常州',
+      ids: ['sz'], status: 'planned', sort: 10, expanded: true },
+    { id: 'chengyu', name: '成渝都市圈', sub: '重庆 · 成都',
+      ids: [], status: 'planned', sort: 20, expanded: false },
+    { id: 'classic', name: '经典地图', sub: '单城经营 · 组内由易到难',
+      ids: [], status: 'live', sort: 90, expanded: true, implicit: true },
+  ];
+  // 规范化：只保留真实存在的地图；一城单归属（按 MODES 顺序先到先得）
+  const claimedMode = {};
+  CM.MAP_MODES = MODES.map(function (m) {
+    return Object.assign({}, m, {
+      ids: (m.ids || []).filter(function (id) { return MAPS[id] && !claimedMode[id] && (claimedMode[id] = m.id); }),
+    });
+  }).map(function (m) {
+    // 可见规则一条：成员 ≥ 2，或显式 force。空壳模式不进渲染，但结构里始终可读
+    m.visible = !!m.force || m.ids.length >= 2;
+    return m;
+  });
+  // 渲染视图：[{ mode, ids }]，组间按 sort，组内保持 MAP_ORDER（难度升序）的既有相对顺序
+  CM.mapGroups = function () {
+    const out = [], claimed = {};
+    for (const m of CM.MAP_MODES.slice().sort(function (a, b) { return (a.sort || 50) - (b.sort || 50); })) {
+      if (m.implicit || !m.visible) continue;
+      const ids = CM.MAP_ORDER.filter(function (id) { return m.ids.indexOf(id) >= 0; });
+      if (!ids.length) continue;
+      for (const id of ids) claimed[id] = 1;
+      out.push({ mode: m, ids: ids });
+    }
+    // 兜底组：未归入任何可见模式的城市（当前 = 全部 8 城）
+    const rest = CM.MAP_ORDER.filter(function (id) { return !claimed[id]; });
+    if (rest.length) out.push({ mode: CM.MAP_MODES.filter(function (m) { return m.implicit; })[0], ids: rest });
+    return out;
+  };
   CM.mapId = 'gz';
   CM.useMap = function (id) {
     const m = MAPS[id] || MAPS.gz;
