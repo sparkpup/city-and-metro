@@ -35,9 +35,13 @@ const cityKey = arg('city', '');
 const CITIES = {
   sz: { id: 'sz', W: 120, H: 96, proj: { lon0: 120.415, lat0: 31.456, kx: 379.75, ky: 444.44 }, bbox: [31.240, 120.415, 31.456, 120.731] },
   xa: { id: 'xa', W: 96, H: 120, proj: { lon0: 108.802, lat0: 34.4578, kx: 367.82, ky: 443.62 }, bbox: [34.1873, 108.802, 34.4578, 109.063] },
+  // 上海：17952 格（136×132），每格 252×253 m。与 fetch-geo.mjs 的 CITIES 必须逐位一致，否则抓取块与投影对不上
+  sh: { id: 'sh', W: 136, H: 132, proj: { lon0: 121.320, lat0: 31.400, kx: 377.78, ky: 440.00 }, bbox: [31.100, 121.320, 31.400, 121.680] },
+  // 重庆：9600 格（96×100）。本阶段只出设计案、未抓取，先把配置位留好
+  cq: { id: 'cq', W: 96, H: 100, proj: { lon0: 106.420, lat0: 29.660, kx: 400.00, ky: 454.55 }, bbox: [29.440, 106.420, 29.660, 106.660] },
 };
 const city = CITIES[cityKey];
-if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
+if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa|sh|cq [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
 const rawDir = path.resolve(arg('raw', path.join(WORKSPACE, 'data', 'raw', city.id)));
 const outFile = path.resolve(REPO, arg('out', 'js/content/geo_' + city.id + '.js'));
 const reportFile = arg('report', '') ? path.resolve(REPO, arg('report', '')) : '';

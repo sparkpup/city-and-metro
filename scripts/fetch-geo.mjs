@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // OSM Overpass 分块抓取器（city-and-metro 地理管线）
-//   用法：node scripts/fetch-geo.mjs --city sz|xa [--status] [--force] [--api <url>] [--timeout <sec>]
+//   用法：node scripts/fetch-geo.mjs --city sz|xa|sh|cq [--status] [--force] [--api <url>] [--timeout <sec>]
 //   缓存：<工作区>/data/raw/<city>/*.json，原始 JSON 不入仓库；断点续跑（已存在且非空则跳过）
 //   分层：每块两条查询（路网河铁 / 水面+绿地与关系）；另两条全城查询（行政边界 / 地名节点）
 //   自适应：查询超时或运行错误时把该块四分递归重试，避免密集区块把服务端 180s 打爆
@@ -16,10 +16,15 @@ const WS = path.resolve(REPO, '..');                       // 工作区根：dat
 const UA = 'city-and-metro-map-authoring/1.0';
 const API0 = 'https://overpass-api.de/api/interpreter';
 
-// 冻结 bbox 与格网（主理人裁定，docs/新城市设计案-sz-xa-v1.md §6.2）
+// 冻结 bbox 与格网（主理人裁定，docs/新城市设计案-sz-xa-v1.md §6.2；sh/cq 见 docs/上海重庆设计案 §6）
+//   bbox 一律 [S, W, N, E]；W/H 为格数（每格≈250 m，用 tests/headless/freeze-bbox.mjs 验算过落格）
 const CITIES = {
   sz: { bbox: [31.2400, 120.4150, 31.4560, 120.7310], W: 120, H: 96 },
   xa: { bbox: [34.1873, 108.8020, 34.4578, 109.0630], W: 96, H: 120 },
+  // 上海：17952 格（136×132），每格 252×253 m。南界 31.10 为容下莘庄（31.112）；浦东机场(121.808)与嘉定(121.25)按设计留在图外
+  sh: { bbox: [31.1000, 121.3200, 31.4000, 121.6800], W: 136, H: 132 },
+  // 重庆：9600 格（96×100），每格 242×245 m。江北机场(29.719)留在图外（与苏州同处理）；本阶段只出设计案不抓取
+  cq: { bbox: [29.4400, 106.4200, 29.6600, 106.6600], W: 96, H: 100 },
 };
 const BLKX = 0.060, BLY = 0.050, STPX = 0.055, STPY = 0.045, MINX = 0.020, MINY = 0.018;
 
@@ -32,7 +37,7 @@ const STATUS = process.argv.includes('--status');
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 const log = (m) => { console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`); };
 
-if (!CITIES[city]) { console.error('用法: --city sz|xa [--status] [--force]'); process.exit(2); }
+if (!CITIES[city]) { console.error('用法: --city sz|xa|sh|cq [--status] [--force]'); process.exit(2); }
 const RAW = path.join(WS, 'data', 'raw', city);
 fs.mkdirSync(RAW, { recursive: true });
 
