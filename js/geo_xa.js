@@ -1,6 +1,7 @@
 'use strict';
 // 由 OpenStreetMap 数据生成（© OpenStreetMap 贡献者，ODbL）。坐标为游戏格（250 m），折线为增量编码，1/64 格精度。地名已统一为简体中文。
 // 抓取 bbox (S,W,N,E) = 34.1873, 108.802, 34.4578, 109.063；分块 0.06°×0.05°（重叠 0.005°）；编码 scripts/encode-geo.mjs --city xa。
+// @generated 本文件由 scripts/encode-geo.mjs 从 OpenStreetMap 生成，属构建产物。禁止手工编辑；修改请改脚本后重生成。坐标口径与层结构见 js/geo.js。
 (function (CM) {
   (CM.GEOS = CM.GEOS || {}).xa = {
     proj: { lon0: 108.802, lat0: 34.4578, kx: 367.82, ky: 443.62 },

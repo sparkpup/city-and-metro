@@ -1,5 +1,6 @@
 'use strict';
 // 由 OpenStreetMap 数据生成（© OpenStreetMap 贡献者，ODbL）。坐标为游戏格（250 m），折线为增量编码，1/64 格精度。
+// @generated 本文件由 scripts/encode-geo.mjs 从 OpenStreetMap 生成，属构建产物。禁止手工编辑；修改请改脚本后重生成。坐标口径与层结构见 js/geo.js。
 (function (CM) {
   CM.GEO = {
     proj: { lon0: 113.2, lat0: 23.215, kx: 409.6, ky: 443 },

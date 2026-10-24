@@ -21,6 +21,10 @@
   const DEF_HANDSHAKE = 20000;
   // 核心模块（无 DOM 依赖的那批）：util / config / geo* / data* / maps / facility / city / metro / sim
   // 用「包含式」白名单而不是「排除式」黑名单：新增城市只增加 geo_<id> / data_<id>，自动被纳入。
+  // ⚠️ 本正则以 ^js\/ 锚定目录前缀。若将来把 js/ 下的文件移进子目录（如 js/content/），
+  //    必须同步改正则，否则 coreScripts() 仍返回非 null（白名单各分支独立成支），
+  //    Worker 内 CM.CFG 未定义 → fatal → client.dead → 静默退回主线程预测（慢 2.4~3.9s），
+  //    游戏不报错、测试不失败，仅在 CFG.perf.useWorker=true 时才暴露。
   const CORE_RE = /^js\/(util|config|geo|geo_[A-Za-z0-9_]+|data_[A-Za-z0-9_]+|maps|facility|city|metro|sim)\.js$/;
 
   function coreScripts() {

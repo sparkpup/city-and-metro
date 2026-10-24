@@ -89,6 +89,12 @@
 
 运行资源位于 `index.html`、`css/`、`js/`、`img/`；各城场景使用 `data_*.js`，地理使用 `geo_*.js`。执行 `node scripts/build.mjs` 生成发布目录 `dist/`，不需要依赖安装。
 
+### 改完怎么自检
+
+- 回归只用 `node tests/headless/city.mjs --check`（在仓库上一级目录执行）：输出 12 行 `PASS/FAIL`、不到 1 KB，非零退出即回归。
+- 不要用 `--smoke`：它重算六城基线、约 8 分钟并重写 `baseline.md`，只在显式更新基线时使用，且不要把它的输出贴进会话。帧数纪律见 `tests/headless/README.md`（默认 600 帧不得提高）。
+- 定位代码用 `node scripts/find.mjs <关键词>`：只搜 `js/` `scripts/` `docs/`，默认跳过 `js/geo_*.js`（生成物，占 80.7% 体积）与 `js/data_*.js`，命中行后按末尾给出的文件行数控制读取量。
+
 ## 已知边界
 
 - 地理使用现代 OpenStreetMap 骨架与年代规则近似历史；人口、设施规模、经济和普通建筑为估算或模拟，不是官方统计。
