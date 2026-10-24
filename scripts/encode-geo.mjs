@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 /*
- * scripts/encode-geo.mjs — OSM 原始块 → js/geo_<id>.js（编码 + 自校验 + 规模报告）
+ * scripts/encode-geo.mjs — OSM 原始块 → js/content/geo_<id>.js（编码 + 自校验 + 规模报告）
  *
  * 用法：
- *   node scripts/encode-geo.mjs --city sz                 # 读 data/raw/sz/*.json → js/geo_sz.js
- *   node scripts/encode-geo.mjs --city xa --raw <dir> --out js/geo_xa.js --report docs/geo-xa-编码报告.md
+ *   node scripts/encode-geo.mjs --city sz                 # 读 data/raw/sz/*.json → js/content/geo_sz.js
+ *   node scripts/encode-geo.mjs --city xa --raw <dir> --out js/content/geo_xa.js --report docs/geo-xa-编码报告.md
  *
  * 编码规则（与 js/geo.js 的 dec/enc 严格一致，内联实现，不 import 游戏 js）：
  *   - 折线：坐标 ×64 取整 → 差分 → zigzag → 每 5 位一字符（bit5=延续位），字符 = 值 + 63
@@ -39,7 +39,7 @@ const CITIES = {
 const city = CITIES[cityKey];
 if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
 const rawDir = path.resolve(arg('raw', path.join(WORKSPACE, 'data', 'raw', city.id)));
-const outFile = path.resolve(REPO, arg('out', 'js/geo_' + city.id + '.js'));
+const outFile = path.resolve(REPO, arg('out', 'js/content/geo_' + city.id + '.js'));
 const reportFile = arg('report', '') ? path.resolve(REPO, arg('report', '')) : '';
 const EPS = parseFloat(arg('simplify', '0.08'));                              // 抽稀阈值（格，20 m）
 const { lon0, lat0, kx, ky } = city.proj, W = city.W, H = city.H;
