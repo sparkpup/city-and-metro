@@ -5,7 +5,8 @@
   const ISO = [0.70710678, -0.70710678, 0.35355339, 0.35355339];
   const HSF = 0.82;                          // 高度屏幕系数
   const EX = 2.0 / CFG.CELL_M;               // 米 → 世界单位（夸张）
-  const LEVELS = [8, 16, 32, 64];
+  const LEVELS = [8, 16, 32, 64, 128];   // 128：下钻到镇/街道一级时地面栅格仍保持清晰
+  const Z_MIN = 4, Z_MAX = 200;            // 缩放上下限（原来写死 5…96，放大到镇/街道级时不够用）
   const CHUNK_PX = 512;
   const MAX_H = 5.0;                          // 世界单位（建筑最大高度，含广州塔天线）
   const FONT = '"PingFang SC","Microsoft YaHei","Noto Sans SC",sans-serif';
@@ -33,6 +34,7 @@
       road: { local: '#ffffff', localCase: '#dee5ee', coll: '#ffffff', collCase: '#d0dbe7', art: '#ffffff', artCase: '#bfccdc', exp: '#f8fafd', expCase: '#a9b9cd', expLine: 'rgba(170,186,208,0.55)', bridgeCase: '#93a3b9', tunnel: 'rgba(140,156,178,0.45)', rail: '#ffffff', railCase: '#a5b1c2' },
       lockFill: 'rgba(226,233,241,0.62)', lockHatch: 'rgba(150,166,188,0.2)',
       ink: '#1c2c45', halo: 'rgba(255,255,255,0.92)', district: '#58708f', landmarkInk: '#36557d', roadInk: '#7a8ca6', lockInk: '#7a889e',
+      admin: { 6: 'rgba(88,112,143,0.5)', 8: 'rgba(126,142,166,0.32)' }, adminInk: { 6: '#58708f', 8: '#8b96a8' },
       stFill: '#ffffff', stInter: '#25334a', isoShadow: 'rgba(80,110,150,0.10)', roofOld: [[226, 232, 240], [214, 222, 232]], roofInd: [222, 228, 236],
       tree: [[134, 188, 128], [112, 170, 112]], trunk: '#8f9c85', elevCase: 'rgba(90,112,145,0.45)', lineCase: 'rgba(255,255,255,0.96)', pier: '#a9b5c6',
       lm2d: { fill: '#e5ebf2', stroke: '#9fb1c8' }, edgeLine: 'rgba(90,120,160,0.12)',
@@ -61,6 +63,7 @@
       road: { local: '#2b384b', localCase: '#162030', coll: '#324157', collCase: '#131c2a', art: '#3d4f68', artCase: '#0f1723', exp: '#4b6080', expCase: '#0e1520', expLine: 'rgba(150,180,220,0.3)', bridgeCase: '#080d15', tunnel: 'rgba(110,130,160,0.4)', rail: '#5a6678', railCase: '#0c121b' },
       lockFill: 'rgba(8,12,20,0.5)', lockHatch: 'rgba(110,128,156,0.16)',
       ink: '#e6edf7', halo: 'rgba(12,18,28,0.88)', district: '#8ea2bd', landmarkInk: '#a9c4e8', roadInk: '#8d9db3', lockInk: '#95a3b7',
+      admin: { 6: 'rgba(142,162,189,0.52)', 8: 'rgba(120,138,166,0.34)' }, adminInk: { 6: '#8ea2bd', 8: '#9aa8bd' },
       stFill: '#ffffff', stInter: '#0e1622', isoShadow: 'rgba(0,0,0,0.28)', roofOld: [[78, 90, 108], [70, 80, 98]], roofInd: [72, 82, 98],
       tree: [[52, 108, 82], [42, 92, 70]], trunk: '#3e4a44', elevCase: 'rgba(0,0,0,0.6)', lineCase: 'rgba(10,16,26,0.92)', pier: '#4a566a',
       lm2d: { fill: '#2c3646', stroke: '#7d93b4' }, edgeLine: 'rgba(160,185,220,0.10)',
@@ -373,7 +376,7 @@
   };
   Renderer.prototype.zoomAt = function (sx, sy, factor) {
     const c = this.cam;
-    c.tz = U.clamp(c.tz * factor, 5, 96);
+    c.tz = U.clamp(c.tz * factor, Z_MIN, Z_MAX);
     const w = this.unproject(sx, sy);
     c.anchor = { sx: sx, sy: sy, wx: w.x, wy: w.y };
     c.fly = null;
@@ -635,6 +638,22 @@
       if (!inBox(l.bbox, 0.5)) continue;
       ctx.strokeStyle = GROUND.water; ctx.lineWidth = Math.max(l.w, px * 1.5);
       ctx.stroke(this.featurePath(l, false));
+    }
+    // 行政区划边界：level 6（区县）常驻；level 8（镇/街道）仅在近景（lvl>=32）出现。
+    // 沿用地面栅格这一套绘制：与公园、道路同处一层，随 lvl 一起分级，不另起一套。
+    if (Geo.adminBk) {
+      const adm = Geo.query(Geo.adminBk, X0 - 0.5, Y0 - 0.5, X1 + 0.5, Y1 + 0.5);
+      for (let ai = 0; ai < 2; ai++) {
+        const lv = ai === 0 ? 6 : 8;
+        if (lv === 8 && lvl < 32) continue;
+        const ap = new Path2D();
+        for (const k of adm) { const f = Geo.admin[k]; if (f.level === lv) ap.addPath(this.featurePath(f, true)); }
+        ctx.strokeStyle = TH.admin[lv];
+        ctx.lineWidth = Math.max(lv === 6 ? 0.085 : 0.05, px * (lv === 6 ? 2 : 1.3));
+        if (lv === 8) ctx.setLineDash([0.34, 0.26]);
+        ctx.stroke(ap);
+        ctx.setLineDash([]);
+      }
     }
     // 2D 建筑占地（近景才显示，保持平面图简洁）
     if (lvl >= 32) {
@@ -3088,6 +3107,28 @@
         halo(text, p.x, p.y - 12, '11px ' + FONT, TH.landmarkInk, 'center');
       }
     }
+    // 行政区划名：区县（level 6）z>=11 起显示，镇/街道（level 8）z>=24 起显示，只画视口内的。
+    // 高等级先试放，放不下就让位给更高优先级——碰撞检测直接用上面的 fits。
+    if (Geo.adminBk && this.mapLabA > 0.01 && this.layer === 'none' && TH.adminInk) {
+      const adm = Geo.query(Geo.adminBk, v.x0, v.y0, v.x1, v.y1);
+      for (let ai = 0; ai < 2; ai++) {
+        const lv = ai === 0 ? 6 : 8;
+        if (lv === 6 ? z < 11 : z < 24) continue;
+        const fs = lv === 6 ? (z < 16 ? 15 : 13) : 11.5;
+        const font = (lv === 6 ? '600 ' : '') + fs + 'px ' + FONT;
+        for (const k of adm) {
+          const f = Geo.admin[k];
+          if (f.level !== lv || !f.name) continue;
+          const p = this.P(f.cx, f.cy, 0);
+          if (p.x < 2 || p.y < 2 || p.x > this.w - 2 || p.y > this.h - 2) continue;
+          const tw = this.textWidth(ctx, f.name);
+          if (!fits(p.x - tw / 2 - 2, p.y - fs / 2 - 2, p.x + tw / 2 + 2, p.y + fs / 2 + 2)) continue;
+          halo(f.name, p.x, p.y, font, TH.adminInk[lv], 'center');
+        }
+      }
+    }
+    // 悬浮/点选区划时的简要信息卡
+    this.drawAdminInfo(ctx);
     // 道路名
     if (z >= 22 && this.layer === 'none' && this.mapLabA > 0.01) {
       ctx.font = '10.5px ' + FONT;
@@ -3189,7 +3230,7 @@
   };
   Renderer.prototype.fitAll = function () {
     const zx = this.w / (CFG.W + 4), zy = this.h / (CFG.H + 4);
-    this.cam.tz = this.cam.zoom = U.clamp(Math.min(zx, zy) * 1.05, 5, 96);
+    this.cam.tz = this.cam.zoom = U.clamp(Math.min(zx, zy) * 1.05, Z_MIN, Z_MAX);
     this.cam.cx = CFG.W / 2; this.cam.cy = CFG.H / 2;
   };
   CM.RENDER_CONST = { EX: EX, HSF: HSF, ISO: ISO, UNDER_DEPTH: UNDER_DEPTH };

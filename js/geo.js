@@ -42,7 +42,7 @@
   };
   // 解码结果按数据源缓存：切换地图时不必重新解码
   const cache = new Map();
-  const KEYS = ['names', 'water', 'waterLines', 'roads', 'streets', 'rail', 'parks', 'reserves', 'woods', 'admin', 'places', 'streetBk'];
+  const KEYS = ['names', 'water', 'waterLines', 'roads', 'streets', 'rail', 'parks', 'reserves', 'woods', 'admin', 'places', 'streetBk', 'adminBk'];
   Geo.init = function () {
     if (Geo.ready && Geo.src === CM.GEO) return Geo;
     const G = CM.GEO, names = G.names;
@@ -61,8 +61,23 @@
     Geo.reserves = G.reserves.map(function (r) { return polyFeat(r, names); });
     Geo.woods = G.woods.map(function (r) { return polyFeat(r, names); });
     Geo.admin = (G.admin || []).map(function (r) { const f = polyFeat(r.slice(1), names); f.level = r[0]; return f; });
+    // 标注落点与规模：外环顶点均值（近似质心）与外环面积（格²），供名称标注与悬浮信息使用
+    for (const f of Geo.admin) {
+      let n = 0, sx = 0, sy = 0, a2 = 0;
+      for (const r of f.rings) {
+        const p = r.p, m = p.length / 2;
+        if (r.outer) for (let k = 0; k < m; k++) { sx += p[2 * k]; sy += p[2 * k + 1]; n++; }
+        let s = 0;
+        for (let k = 0; k < m; k++) { const j = (k + 1) % m; s += p[2 * k] * p[2 * j + 1] - p[2 * j] * p[2 * k + 1]; }
+        a2 += r.outer ? s / 2 : -s / 2;
+      }
+      f.cx = n ? sx / n : (f.bbox ? (f.bbox[0] + f.bbox[2]) / 2 : 0);
+      f.cy = n ? sy / n : (f.bbox ? (f.bbox[1] + f.bbox[3]) / 2 : 0);
+      f.area = Math.abs(a2);
+    }
     Geo.places = G.places || [];
     Geo.streetBk = Geo.buckets(Geo.streets, 4, CM.CFG.W, CM.CFG.H);
+    Geo.adminBk = Geo.buckets(Geo.admin, 16, CM.CFG.W, CM.CFG.H);   // 区划面普遍很大，桶取大一些避免重复登记
     const saved = {}; for (const k of KEYS) saved[k] = Geo[k];
     cache.set(G, saved);
     Geo.src = G; Geo.ready = true;
@@ -180,6 +195,34 @@
     seen = seen || new Set();
     for (let j = j0; j <= j1; j++) for (let i = i0; i <= i1; i++) for (const k of bk.b[j * bk.TW + i]) if (!seen.has(k)) { seen.add(k); out.push(k); }
     return out;
+  };
+  // 地名检索：行政区划（level 6/8，落点取外环顶点均值）与地名点。
+  // 排序：完全一致 > 前缀一致 > 包含；同档按名称短的在前。同名同级的重复要素去重。
+  Geo.search = function (q, limit) {
+    const s = String(q || '').trim().toLowerCase();
+    if (!s) return [];
+    const out = [];
+    const push = function (name, level, x, y) {
+      if (!name) return;
+      const t = name.toLowerCase(), i = t.indexOf(s);
+      if (i < 0) return;
+      out.push({ name: name, level: level, x: x, y: y, rank: i === 0 ? (t.length === s.length ? 0 : 1) : 2 });
+    };
+    for (const f of Geo.admin) {
+      let n = 0, sx = 0, sy = 0;
+      for (const r of f.rings) if (r.outer) { const p = r.p; for (let k = 0; k < p.length; k += 2) { sx += p[k]; sy += p[k + 1]; n++; } }
+      push(f.name, f.level, n ? sx / n : (f.bbox[0] + f.bbox[2]) / 2, n ? sy / n : (f.bbox[1] + f.bbox[3]) / 2);
+    }
+    for (const p of Geo.places) push(p[0], 0, p[1], p[2]);
+    out.sort(function (a, b) { return a.rank - b.rank || a.name.length - b.name.length; });
+    const seen = new Set(), res = [];
+    for (const o of out) {
+      const k = o.name + '@' + o.level;
+      if (seen.has(k)) continue;
+      seen.add(k); res.push(o);
+      if (res.length >= (limit || 8)) break;
+    }
+    return res;
   };
   // 在画布上描出要素路径
   Geo.tracePoly = function (ctx, f) {
