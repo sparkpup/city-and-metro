@@ -26,11 +26,14 @@ const API0 = 'https://overpass-api.de/api/interpreter';
 // 冻结 bbox 与格网（主理人裁定，docs/新城市设计案-sz-xa-v1.md §6.2；sh/cq 见 docs/上海重庆设计案 §6）
 //   bbox 一律 [S, W, N, E]；W/H 为格数（每格≈250 m，用 tests/headless/freeze-bbox.mjs 验算过落格）
 const CITIES = {
-  // 苏州北扩（2026-10-26）：北界 31.456 → 31.501，为把相城区黄埭镇完整镇域纳入可玩范围
-  // （原图幅下黄埭镇落格 y=1.3，紧贴最上边一条边，镇域大半被切在图外）。
-  // ky 仍为 444.44，每格保持 250 m；格数 11520 → 13920。proj 的 lat0 随之改为 31.501。
+  // 苏州扩界（2026-10-26，两轮）：
+  //   北扩：北界 31.456 → 31.501，纳相城区黄埭镇完整镇域（原 y=1.3 贴边，镇域大半在图外）
+  //   东扩：东界 120.731 → 121.068，纳昆山市域与花桥（11 号线西端，接上海方向）
+  // kx/ky 保持 379.75 / 444.44，每格仍 250 m；格数 11520 → 13920 → 28768。
+  // W=248 与 H=116 均能被 ZONE=4 整除（否则 city.js/sim.js 会出现小数下标、静默错位）。
+  // 28768 格在求解器 skim 的 32000 上限内；若再往南扩到同里会到 44640 格、超出上限。
   // 影响：苏州既有存档与 city.mjs 基线作废，需重跑。
-  sz: { bbox: [31.2400, 120.4150, 31.5010, 120.7310], W: 120, H: 116 },
+  sz: { bbox: [31.2400, 120.4150, 31.5010, 121.0680], W: 248, H: 116 },
   xa: { bbox: [34.1873, 108.8020, 34.4578, 109.0630], W: 96, H: 120 },
   // 上海：17952 格（136×132），每格 252×253 m。南界 31.10 为容下莘庄（31.112）；浦东机场(121.808)与嘉定(121.25)按设计留在图外
   sh: { bbox: [31.1000, 121.3200, 31.4000, 121.6800], W: 136, H: 132 },
@@ -59,7 +62,7 @@ const Q_ADMIN = (b) => `[out:json][timeout:${QT}];(\n rel["boundary"="administra
 const Q_PLACES = (b) => `[out:json][timeout:120];(\n node["place"~"^(city|town|village|suburb|neighbourhood|square|locality|hamlet)$"](${B(b)});\n);\nout;`;
 
 class SplitErr extends Error {}
-let stat = { ok: 0, cached: 0, split: 0, fail: 0, stale: 0, reused: 0 };
+let stat = { ok: 0, cached: 0, split: 0, fail: 0, stale: 0, reused: 0, new: 0 };
 
 // ---------------- 缓存索引（manifest）----------------
 // 目标：把「哪些查询已经抓过、抓到了什么、还是否有效」落盘，让多次运行能算增量而不是重来一遍。
@@ -140,8 +143,8 @@ async function get(q, file, key, tries = 4) {
   }
   // --retry-failed：只重跑上次失败的，其余跳过（不请求、不改缓存）
   if (RETRY_FAILED && (!e0 || e0.status !== 'fail')) return 'skip';
-  // --plan：只算计划，不发请求
-  if (PLAN) return (e0 ? 'stale' : 'new');
+  // --plan：只算计划，不发请求。new 也要计数，否则干跑统计会漏掉「从未抓过」的那批
+  if (PLAN) { if (!e0) stat.new++; return (e0 ? 'stale' : 'new'); }
 
   let last = '';
   for (let a = 0; a < tries; a++) {
@@ -233,7 +236,7 @@ async function main() {
   log(`全城 places=${r4}`);
   saveManifest();
   const bad = Object.keys(man.queries).filter((k) => man.queries[k].status === 'fail');
-  log(`完成 ${city}：ok=${stat.ok} cached=${stat.cached} reuse=${stat.reused} stale=${stat.stale} split=${stat.split} fail=${stat.fail}`);
+  log(`完成 ${city}：ok=${stat.ok} cached=${stat.cached} reuse=${stat.reused} stale=${stat.stale} new=${stat.new} split=${stat.split} fail=${stat.fail}`);
   if (bad.length) log(`  ✗ 失败 ${bad.length} 项，已记入索引；修复后跑 --retry-failed 只重跑这些：${bad.slice(0, 10).join(', ')}${bad.length > 10 ? ' …' : ''}`);
   if (!PLAN) log(`  索引已写入 ${MANIFEST}（下次运行按 bodyHash 判定增量，配置不变则直接复用）`);
 }
