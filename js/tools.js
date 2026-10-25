@@ -144,8 +144,12 @@
       else if (this.ptr.moved || this.ptr.pan) { if (CM.Follow && CM.Follow.active()) CM.Follow.stop(); R.panBy(dx, dy); this.ptr.pan = true; }
       this.ptr.x = e.clientX; this.ptr.y = e.clientY;
     }
-    if (e.target !== R.cv && !this.ptr) { this.hover = null; this.noteHover(); this.pointerOn = false; this.ui.setTooltip(null); return; }
+    if (e.target !== R.cv && !this.ptr) { this.hover = null; this.noteHover(); this.pointerOn = false; R.hoverAdmin = null; this.ui.setTooltip(null); return; }
     this.updateHover(e.clientX, e.clientY, e.shiftKey || e.altKey);
+    // 行政区划指示：记录光标位置与光标下的区划；已有车站/线路提示时不抢它的提示条
+    R.mouseX = e.clientX; R.mouseY = e.clientY;
+    R.hoverAdmin = R.pickAdmin(e.clientX, e.clientY);
+    if (!this.hint && R.hoverAdmin) this.ui.setTooltip(R.adminInfo(R.hoverAdmin), e.clientX, e.clientY);
     if (e.pointerType === 'touch') this.ui.setTooltip(null);   // 触屏没有悬停：拖动地图时不显示提示
   };
   Tools.prototype.onUp = function (e) {
@@ -158,6 +162,9 @@
     // 选择工具下点击行驶中的列车：进入跟随模式（车站优先）
     if (p.button === 0 && !p.moved && this.tool === 'select' && CM.Follow && !this.R.pickStation(e.clientX, e.clientY)) { const tr = CM.Follow.pick(e.clientX, e.clientY); if (tr) { CM.Follow.start(tr); return; } }
     if (p.button === 0 && !p.moved) this.onClick(e.clientX, e.clientY, e.shiftKey || e.altKey, e.ctrlKey || e.metaKey || e.shiftKey);
+    // 区划指示：空白处单击 = 钉住该区划信息卡（触屏没有悬停，这是移动端唯一的查看方式）。
+    // 命中车站时让位给车站面板——信息卡不该和车站页面抢位置。
+    if (p.button === 0 && !p.moved && !this.R.pickStation(e.clientX, e.clientY)) this.R.selAdmin = this.R.pickAdmin(e.clientX, e.clientY);
   };
 
   // ---------------- 悬停与提示 ----------------

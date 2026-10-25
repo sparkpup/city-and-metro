@@ -939,6 +939,12 @@
       box.appendChild(ctl);
     };
     const CC = CM.Renderer.CONG_COLS;
+    // 行政区划边界：跟任意图例一起给出，说明两级边界的线型
+    if (R.th && R.th.admin && R.th.adminInk) {
+      box.appendChild(h('div', { class: 'tiny muted', style: { margin: '8px 0 2px' } }, '行政区划边界'));
+      li(R.th.admin[6], '区县界', 'line');
+      li(R.th.admin[8], '镇 · 街道界（放大后显示）', 'line');
+    }
     let note = '';
     switch (id) {
       case 'pop': grad(['#ffe296', '#f99e4c', '#de5434'], '0', '6 万人/km²'); note = '每个街区的常住人口密度（每月更新）。'; break;
@@ -1368,6 +1374,28 @@
     this.R.setHighlight({ kind: 'road', ways: ways, lx: p[m], ly: p[m + 1], label: name });
     this.fitBox(x0, y0, x1, y1, 24);
   };
+  // 区划定位：把整块区划纳入视野（区县看全貌，镇/街道再放大到能看清边界与名称），并钉住信息卡
+  UI.prototype.locateAdmin = function (it) {
+    const R = this.R;
+    if (!it || !it.name) return;
+    const fs = (CM.Geo && CM.Geo.admin ? CM.Geo.admin : []).filter(function (f) { return f.name === it.name; });
+    if (!fs.length) { this.locatePoint(it.x, it.y, it.name, 6); return; }
+    let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9, best = null;
+    for (const f of fs) {
+      const b = f.bbox; if (!b) continue;
+      if (b[0] < x0) x0 = b[0]; if (b[1] < y0) y0 = b[1]; if (b[2] > x1) x1 = b[2]; if (b[3] > y1) y1 = b[3];
+      if (!best || f.level > best.level || (f.level === best.level && f.area > best.area)) best = f;
+    }
+    if (x0 > x1) { this.locatePoint(it.x, it.y, it.name, 6); return; }
+    R.selAdmin = best; R.hoverAdmin = null;
+    const pad = Math.max(1.5, Math.min(6, (x1 - x0 + y1 - y0) * 0.04));
+    R.setHighlight({ kind: 'rect', x0: x0, y0: y0, x1: x1, y1: y1, lx: (x0 + x1) / 2, ly: y0, label: it.name });
+    this.fitBox(x0 - pad, y0 - pad, x1 + pad, y1 + pad, best.level >= 8 ? 48 : 26);
+    // fitBox 的下限是 z=7：镇 · 街道必须放大到「名称 + 边界都出现」才有意义
+    //（镇名 z>=20、镇界 lvl>=16≈z>13），否则搜到镇却停在区县视角，等于没定位。
+    const fly = R.cam.fly;
+    if (fly && best.level >= 8 && fly.tzm < 22) fly.tzm = 22;
+  };
   UI.prototype.openSearch = function () {
     const g = this.g(); if (!g) return;
     if (this.searchEl) { this.closeSearch(); return; }
@@ -1381,8 +1409,8 @@
     pop.style.top = (r.bottom + 8) + 'px'; pop.style.right = Math.max(8, window.innerWidth - r.right - 40) + 'px';
     let items = [], cur = 0;
     // 地理条目（区域、城区、地标、道路、地名）：打开时生成一次
-    const RANK = { lines: 0, stations: 1, region: 2, district: 2, landmark: 3, road: 4, place: 5 };
-    const geo = [];
+    const RANK = { lines: 0, stations: 1, region: 2, district: 2, admin: 3, landmark: 3, road: 4, place: 5 };
+    const geo = [], admins = new Map();
     city.regions.forEach(function (rg, k) {
       if (!rg.name || !rg.cells || !rg.bbox) return;
       geo.push({ kind: 'region', id: k, name: rg.name, sub: '区域 · ' + (rg.scenic ? '风景区' : city.regionOpen[k] ? '已开放' : '尚未开放（' + U.regionLock(rg) + '）'), icon: 'map' });
@@ -1398,6 +1426,25 @@
     roads.forEach(function (e) { e.sub = '道路 · ' + (CLS[e.cls] || '道路'); geo.push(e); });
     const seen = new Set();
     for (const p of D.places) if (!seen.has(p[0])) { seen.add(p[0]); geo.push({ kind: 'place', name: p[0], sub: '地名', x: p[1], y: p[2], icon: 'locate' }); }
+    // 行政区划（区县 / 镇·街道）：同一区划可能在数据里拆成多块，按名字去重，落点取第一块的质心
+    for (const f of CM.Geo.admin) {
+      if (!f.name || !f.bbox) continue;
+      const g2 = admins.get(f.name);
+      if (g2) {
+        g2.n++; g2.cx += f.cx; g2.cy += f.cy;
+        const b = f.bbox;
+        if (b[0] < g2.bx0) g2.bx0 = b[0]; if (b[1] < g2.by0) g2.by0 = b[1];
+        if (b[2] > g2.bx1) g2.bx1 = b[2]; if (b[3] > g2.by1) g2.by1 = b[3];
+        if (f.level > g2.level) g2.level = f.level;
+        continue;
+      }
+      admins.set(f.name, {
+        kind: 'admin', name: f.name, sub: f.level === 6 ? '区县' : (f.level === 8 ? '镇 · 街道' : '行政区'),
+        x: f.cx, y: f.cy, icon: 'map', level: f.level, n: 1, sx: f.cx, sy: f.cy,
+        bx0: f.bbox[0], by0: f.bbox[1], bx1: f.bbox[2], by1: f.bbox[3]
+      });
+    }
+    admins.forEach(function (g2) { g2.x = g2.sx / g2.n; g2.y = g2.sy / g2.n; geo.push(g2); });
     const entries = function () {
       const net = g.draft ? g.draft.net : g.net, out = [];
       for (const id in net.stations) {
@@ -1420,6 +1467,7 @@
       else if (it.kind === 'region') self.locateRegion(it.id);
       else if (it.kind === 'road') self.locateRoad(it.name);
       else if (it.kind === 'district') self.locatePoint(it.x, it.y, it.name, 4, 4);
+      else if (it.kind === 'admin') self.locateAdmin(it);
       else self.locatePoint(it.x, it.y, it.name, it.kind === 'landmark' ? 0.8 : 1.2);
     };
     const canFav = function (it) { return it.kind === 'stations' || it.kind === 'lines'; };

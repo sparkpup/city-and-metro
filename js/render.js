@@ -97,6 +97,8 @@
     this.segDecos = new WeakMap();
     this.heatLayers = new Map();
     this.geoPaths = new WeakMap();
+    // 行政区划指示：悬浮/点中的区划与光标屏幕位置（信息卡用）
+    this.hoverAdmin = null; this.selAdmin = null; this.mouseX = null; this.mouseY = null;
   }
   CM.Renderer = Renderer;
 
@@ -319,6 +321,8 @@
     this.heatLayers.clear(); this.segScreens = new WeakMap(); this.segDecos = new WeakMap(); this.metroOrder = null;
     this.roadLabelGeom = new WeakMap(); this.textWidths.clear(); this._cgBmp = null;
     this.geoPaths = new WeakMap(); this.labelImage = null;
+    // 换地图时清掉区划指示：旧城市的区划要素已随 CM.Geo 换掉，留着会画出一辆空信息卡
+    this.hoverAdmin = null; this.selAdmin = null; this.mouseX = this.mouseY = null;
     this._hd = null; this._hdCity = null; this._lmc = null; this._lmcCity = null;
     this.lastFrameMs = null; this.detail = { tier: 0, ema: 8, busy: 0, calm: 0 };
     this.roadVer = g ? g.city.roadVersion : -1;
@@ -645,9 +649,9 @@
       const adm = Geo.query(Geo.adminBk, X0 - 0.5, Y0 - 0.5, X1 + 0.5, Y1 + 0.5);
       for (let ai = 0; ai < 2; ai++) {
         const lv = ai === 0 ? 6 : 8;
-        if (lv === 8 && lvl < 32) continue;
+        if (lv === 8 && lvl < 16) continue;   // 与支路同档：lvl 16 约对应 z>=26
         const ap = new Path2D();
-        for (const k of adm) { const f = Geo.admin[k]; if (f.level === lv) ap.addPath(this.featurePath(f, true)); }
+        for (const k of adm) { const f = Geo.admin[k]; if (adminTier(f.level) === lv) ap.addPath(this.featurePath(f, true)); }
         ctx.strokeStyle = TH.admin[lv];
         ctx.lineWidth = Math.max(lv === 6 ? 0.085 : 0.05, px * (lv === 6 ? 2 : 1.3));
         if (lv === 8) ctx.setLineDash([0.34, 0.26]);
@@ -1923,6 +1927,8 @@
     if (under < 0.5) this.drawAtmosphere(ctx);
     // ---- 标注 ----
     this.drawLabels(ctx, ui);
+    // 行政区划指示：信息卡不进标注缓存（标注缓存只在相机变化时重画，悬浮要跟手）
+    this.drawAdminInfo(ctx);
     if (this.hl) this.drawHighlight(ctx);
     if (ui && ui.drawOverlay) ui.drawOverlay(ctx, this);
     // ---- 缓存渲染队列 ----
@@ -3109,16 +3115,16 @@
     }
     // 行政区划名：区县（level 6）z>=11 起显示，镇/街道（level 8）z>=24 起显示，只画视口内的。
     // 高等级先试放，放不下就让位给更高优先级——碰撞检测直接用上面的 fits。
-    if (Geo.adminBk && this.mapLabA > 0.01 && this.layer === 'none' && TH.adminInk) {
-      const adm = Geo.query(Geo.adminBk, v.x0, v.y0, v.x1, v.y1);
+    if (CM.Geo.adminBk && this.mapLabA > 0.01 && this.layer === 'none' && TH.adminInk) {
+      const adm = CM.Geo.query(CM.Geo.adminBk, v.x0, v.y0, v.x1, v.y1);
       for (let ai = 0; ai < 2; ai++) {
         const lv = ai === 0 ? 6 : 8;
-        if (lv === 6 ? z < 11 : z < 24) continue;
+        if (lv === 6 ? z < 11 : z < 20) continue;
         const fs = lv === 6 ? (z < 16 ? 15 : 13) : 11.5;
         const font = (lv === 6 ? '600 ' : '') + fs + 'px ' + FONT;
         for (const k of adm) {
-          const f = Geo.admin[k];
-          if (f.level !== lv || !f.name) continue;
+          const f = CM.Geo.admin[k];
+          if (adminTier(f.level) !== lv || !f.name) continue;
           const p = this.P(f.cx, f.cy, 0);
           if (p.x < 2 || p.y < 2 || p.x > this.w - 2 || p.y > this.h - 2) continue;
           const tw = this.textWidth(ctx, f.name);
@@ -3127,8 +3133,6 @@
         }
       }
     }
-    // 悬浮/点选区划时的简要信息卡
-    this.drawAdminInfo(ctx);
     // 道路名
     if (z >= 22 && this.layer === 'none' && this.mapLabA > 0.01) {
       ctx.font = '10.5px ' + FONT;
@@ -3159,9 +3163,13 @@
     if (z < 16 && this.mapLabA > 0.01 && this.layer !== 'flow') {
       const a = U.clamp((16 - z) / 5, 0, 1) * 0.75;
       for (const dl of (city.districtLabels || [])) {
-        const p = this.P(dl[1], dl[2], 0);
+        const p = this.P(dl[1], dl[2], 0), fs2 = z < 9 ? 15 : 17;
+        ctx.font = '600 ' + fs2 + 'px ' + FONT;
+        const w = this.textWidth(ctx, dl[0]);
+        // 与站名、地标、道路名一样做碰撞检测：放不下就让位（原来这里没有判重，缩小时会互相压盖）
+        if (!fits(p.x - w / 2 - 2, p.y - fs2 / 2 - 2, p.x + w / 2 + 2, p.y + fs2 / 2 + 2)) continue;
         ctx.globalAlpha = a * this.mapLabA;
-        halo(dl[0], p.x, p.y, '600 ' + (z < 9 ? 15 : 17) + 'px ' + FONT, TH.district, 'center');
+        halo(dl[0], p.x, p.y, '600 ' + fs2 + 'px ' + FONT, TH.district, 'center');
       }
       ctx.globalAlpha = 1;
     }
@@ -3183,6 +3191,104 @@
         shown.add(k);
       }
     }
+  };
+
+  // ---------------- 行政区划指示 ----------------
+  // 各地图的 admin_level 口径不同：内地是 6=区县 / 8=镇·街道，而台北、东京是 7=区·市。
+  // 统一归一到两档：>=8 归「镇·街道」档，其余（4/6/7）归「区县」档。
+  function adminTier(level) { return level >= 8 ? 8 : 6; }
+  // 点是否落在区划内（含孔洞，与 tracePoly + evenodd 的填充规则一致）
+  Renderer.prototype.adminHas = function (x, y, f) {
+    let ins = false;
+    for (const r of f.rings) {
+      const p = r.p, n = p.length / 2;
+      for (let i = 0, j = n - 1; i < n; j = i++) {
+        const xi = p[2 * i], yi = p[2 * i + 1], xj = p[2 * j], yj = p[2 * j + 1];
+        if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) ins = !ins;
+      }
+    }
+    return ins;
+  };
+  // 区划内的人口、岗位与建成规模：只扫外包框内的格子，结果缓存在要素上（悬浮时才算，第一次之后几乎免费）
+  Renderer.prototype.adminStats = function (f) {
+    if (f.stats) return f.stats;
+    const city = this.game.city, W = city.W, H = city.H, b = f.bbox || [0, 0, 0, 0];
+    let pop = 0, jobs = 0, cells = 0, urban = 0;
+    const j1 = Math.min(H - 1, Math.floor(b[3])), i1 = Math.min(W - 1, Math.floor(b[2]));
+    for (let j = Math.max(0, Math.floor(b[1])); j <= j1; j++)
+      for (let i = Math.max(0, Math.floor(b[0])); i <= i1; i++) {
+        if (!this.adminHas(i + 0.5, j + 0.5, f)) continue;
+        const c = j * W + i;
+        cells++; pop += city.pop[c]; jobs += city.jobs[c];
+        if (city.street[c]) urban++;
+      }
+    f.stats = { pop: pop, jobs: jobs, cells: cells, urban: urban, areaKm2: cells * CFG.CELL_M * CFG.CELL_M / 1e6 };
+    return f.stats;
+  };
+  // 简要信息：名称 / 层级 / 所属 / 面积 / 人口与岗位
+  Renderer.prototype.adminInfo = function (f) {
+    const st = this.adminStats(f);
+    const LV = { 4: '地级市', 6: '区县', 8: '镇 · 街道', 0: '地名点' };
+    const lines = ['层级：' + (LV[f.level] || 'level ' + f.level)];
+    if (f.level !== 6) {
+      let parent = null;
+      for (const g of CM.Geo.admin) {
+        if (g.level !== 6 || g === f || g === parent) continue;
+        const b = g.bbox; if (!b) continue;
+        if (b[0] > f.cx || b[2] < f.cx || b[1] > f.cy || b[3] < f.cy) continue;
+        if (!this.adminHas(f.cx, f.cy, g)) continue;
+        if (!parent || g.area < parent.area) parent = g;
+      }
+      if (parent) lines.push('所属：' + parent.name);
+    }
+    if (f.level === 6) lines.push('面积：约 ' + st.areaKm2.toFixed(0) + ' km²');
+    if (st.pop > 0) lines.push('人口 ' + (st.pop / 10000).toFixed(1) + ' 万 · 岗位 ' + (st.jobs / 10000).toFixed(1) + ' 万');
+    return { title: f.name, lines: lines };
+  };
+  // 拾取：屏幕 → 世界，命中多个时取更具体的一级（level 高 = 更细）
+  Renderer.prototype.pickAdmin = function (sx, sy) {
+    const Geo = CM.Geo;
+    if (!Geo.adminBk || !Geo.admin.length) return null;
+    const w = this.unproject(sx, sy);
+    let best = null;
+    for (const k of Geo.query(Geo.adminBk, w.x, w.y, w.x, w.y)) {
+      const f = Geo.admin[k];
+      if (!f.name || !this.adminHas(w.x, w.y, f)) continue;
+      if (!best || f.level > best.level) best = f;
+    }
+    return best;
+  };
+  // 指示信息卡：悬浮时跟随光标，点选后钉在左下角
+  Renderer.prototype.drawAdminInfo = function (ctx) {
+    const f = this.hoverAdmin || this.selAdmin;
+    if (!f || !f.name || !TH.adminInk) return;
+    const info = this.adminInfo(f), dpr = this.dpr;
+    const PAD = 9 * dpr, LH = 15 * dpr;
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+    ctx.font = '600 12px ' + FONT;
+    let w = this.textWidth(ctx, info.title);
+    ctx.font = '11px ' + FONT;
+    for (const t of info.lines) w = Math.max(w, this.textWidth(ctx, t));
+    w += PAD * 2;
+    const h = LH * (info.lines.length + 1) + PAD * 2;
+    let x, y;
+    if (this.hoverAdmin && this.mouseX != null) { x = this.mouseX + 16; y = (this.mouseY || 0) + 16; }
+    else { x = 12; y = this.h - h - 12; }
+    if (x + w > this.w - 6) x = Math.max(6, this.w - w - 6);
+    if (y + h > this.h - 6) y = Math.max(6, this.h - h - 6);
+    ctx.globalAlpha = this.hoverAdmin ? 0.93 : 1;
+    ctx.fillStyle = U.rgb(TH.bg, 0.96);
+    ctx.strokeStyle = TH.edgeLine;
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    if (ctx.roundRect) ctx.roundRect(x, y, w, h, 8 * dpr); else ctx.rect(x, y, w, h);
+    ctx.fill(); ctx.stroke();
+    ctx.globalAlpha = 1;
+    ctx.font = '600 12px ' + FONT; ctx.fillStyle = TH.adminInk[f.level] || TH.ink;
+    ctx.fillText(info.title, x + PAD, y + PAD + LH / 2);
+    ctx.font = '11px ' + FONT; ctx.fillStyle = TH.roadInk;
+    for (let i = 0; i < info.lines.length; i++) ctx.fillText(info.lines[i], x + PAD, y + PAD + LH * (i + 1) + LH / 2);
   };
 
   // ---------------- 拾取 ----------------
