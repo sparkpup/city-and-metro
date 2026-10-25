@@ -643,9 +643,10 @@
       ctx.strokeStyle = GROUND.water; ctx.lineWidth = Math.max(l.w, px * 1.5);
       ctx.stroke(this.featurePath(l, false));
     }
-    // 行政区划边界：level 6（区县）常驻；level 8（镇/街道）仅在近景（lvl>=32）出现。
+    // 行政区划边界：区县档常驻；镇·街道档在 lvl>=16 才出现（实测 z 约 17 起）。
     // 沿用地面栅格这一套绘制：与公园、道路同处一层，随 lvl 一起分级，不另起一套。
-    if (Geo.adminBk) {
+    // 兜底：主题没配 admin 配色时整块跳过，别让 strokeStyle=undefined 悄悄沿用上一个颜色
+    if (Geo.adminBk && TH.admin) {
       const adm = Geo.query(Geo.adminBk, X0 - 0.5, Y0 - 0.5, X1 + 0.5, Y1 + 0.5);
       for (let ai = 0; ai < 2; ai++) {
         const lv = ai === 0 ? 6 : 8;
