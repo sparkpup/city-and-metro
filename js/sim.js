@@ -346,7 +346,10 @@
 
   function Model(city) {
     this.city = city;
-    this.ZW = CFG.W / CFG.ZONE; this.ZH = CFG.H / CFG.ZONE; this.Z = this.ZW * this.ZH;
+    // 小区数按「向上取整」：W/H 不被 ZONE 整除时（如上海 136×132、苏州 248×116 在 ZONE=8 下），
+    // 末行/末列小区只覆盖残余格，避免 Z 出现小数导致 skim/zoneCells 数组错位或越界。
+    // 整除时 ceil 与原值一致，六图（ZONE=4）行为不变。
+    this.ZW = Math.ceil(CFG.W / CFG.ZONE); this.ZH = Math.ceil(CFG.H / CFG.ZONE); this.Z = this.ZW * this.ZH;
     this.BW = Math.ceil(this.ZW / 2); this.BH = Math.ceil(this.ZH / 2); this.B = this.BW * this.BH;
     const norm = function (prof) { const s = prof.reduce(function (a, b) { return a + b; }, 0); return prof.map(function (v) { return v / s; }); };
     this.profiles = { wd: norm(CFG.hourProfile.slice()), we: norm((CFG.hourProfileWe || CFG.hourProfile).slice()) };
@@ -366,7 +369,8 @@
     const Z = CFG.ZONE;
     for (let z = 0; z < this.Z; z++) {
       const zi = z % this.ZW, zj = (z / this.ZW) | 0, arr = [];
-      for (let j = zj * Z; j < zj * Z + Z; j++) for (let i = zi * Z; i < zi * Z + Z; i++) arr.push(j * CFG.W + i);
+      const j0 = zj * Z, j1 = Math.min(j0 + Z, CFG.H), i0 = zi * Z, i1 = Math.min(i0 + Z, CFG.W);
+      for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) arr.push(j * CFG.W + i);
       this.zoneCells.push(Int32Array.from(arr));
     }
     this.zPop = new Float32Array(this.Z); this.zJobs = new Float32Array(this.Z); this.zAttr = new Float32Array(this.Z);

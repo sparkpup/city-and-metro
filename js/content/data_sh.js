@@ -482,7 +482,7 @@
       geo: G, data: data, starts: data.starts, defaultStart: data.defaultStart,
       econ: { devOffset: 4, money: 1 },
       cfg: {
-      W: 136, H: 132, START: { y: 1993, m: 5, d: 28, minute: 360 },
+      W: 136, H: 132, ZONE: 8, START: { y: 1993, m: 5, d: 28, minute: 360 },
       // 1993 年图内人口约 760 万（§4.1 依据表）；2010 年到 1250 万，之后走平
       growth: Object.assign({}, CM.CFG.growth, {
         popCurve: [[1993, 7.6e6], [1997, 8.2e6], [2000, 8.9e6], [2005, 1.05e7], [2010, 1.25e7],

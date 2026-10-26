@@ -26,9 +26,12 @@
     return j * this.W + i;
   };
   City.prototype.zoneOf = function (c) {
-    const Z = CFG.ZONE;
+    // 容错：W/H 不被 ZONE 整除时，末行/末列的残余格并入最后一个小区，
+    // 确保 zoneOf 落在 [0, ZW*ZH) 内、与 sim.js 的 zoneCells 一一对应。
+    const Z = CFG.ZONE, ZW = Math.ceil(this.W / Z), ZH = Math.ceil(this.H / Z);
     const i = c % this.W, j = (c / this.W) | 0;
-    return ((j / Z) | 0) * (this.W / Z) + ((i / Z) | 0);
+    const zi = Math.min((i / Z) | 0, ZW - 1), zj = Math.min((j / Z) | 0, ZH - 1);
+    return zj * ZW + zi;
   };
 
   // ---------------- 生成 ----------------
@@ -743,7 +746,7 @@
       if (this.eCls[e1] !== this.eCls[e2] || this.eName[e1] !== this.eName[e2]) forced[v] = 1;
     }
     // 小区连接点
-    const Z = CFG.ZONE, ZW = this.W / Z, ZH = this.H / Z;
+    const Z = CFG.ZONE, ZW = Math.ceil(this.W / Z), ZH = Math.ceil(this.H / Z);
     const zoneCand = [];
     for (let zj = 0; zj < ZH; zj++) {
       for (let zi = 0; zi < ZW; zi++) {
