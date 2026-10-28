@@ -563,9 +563,11 @@
     const f = Fac.byId(id); if (!f) return null;
     const el = h('div');
     const yr = g.year(), k = model.facIndex(id), active = k >= 0;
-    const status = active ? '运营中' : (yr < f.open ? Math.floor(f.open) + ' 年启用' : (f.close != null && yr >= f.close ? '已停用（' + Math.floor(f.close) + ' 年）' : '暂未运营'));
+    const _acc = model.net ? model.net.acc : null, _node = k >= 0 ? model.Z + k : -1;
+    const _noMetro = active && _acc && _acc.NZ === model.fn.NZ && _node >= 0 && (_acc.zCov[_node] || 0) <= 0;
+    const status = !active ? (yr < f.open ? Math.floor(f.open) + ' 年启用' : (f.close != null && yr >= f.close ? '已停用（' + Math.floor(f.close) + ' 年）' : '暂未运营')) : (_noMetro ? '运营中 · 无地铁接驳' : '运营中');
     el.appendChild(h('div', { class: 'row', style: { flexWrap: 'wrap', marginBottom: '8px' } },
-      h('span', { class: 'tag' }, ic(f.T.icon), ' ', f.T.name), h('span', { class: 'tag' }, Fac.purposeText(f)), h('span', { class: 'tag ' + (active ? 'good' : 'warn') }, status),
+      h('span', { class: 'tag' }, ic(f.T.icon), ' ', f.T.name), h('span', { class: 'tag' }, Fac.purposeText(f)), h('span', { class: 'tag ' + (active ? (_noMetro ? 'warn' : 'good') : 'warn') }, status),
       Fac.sources(f).map(function (s) { return h('span', { class: 'tag ' + s[1] }, s[0]); })));
     el.appendChild(this.kv([
       ['参考规模（估算）', Fac.sizeText(f, yr)],

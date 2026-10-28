@@ -71,7 +71,7 @@
     simRoads: [],
     landmarks: [
       Object.assign(at(30.1985, 120.1296), { id: 'hz_liuhe', name: '六和塔', w: 60, d: 60, year: 1900, kind: 'pagoda', h: 60 }),
-      Object.assign(at(30.2420, 120.0990), { id: 'hz_lingyin', name: '灵隐寺', w: 200, d: 300, year: 1950, kind: 'temple' }),
+      Object.assign(at(30.2420, 120.0990), { id: 'hz_lingyin', name: '灵隐寺', w: 200, d: 300, year: 1950, kind: 'temple', allowRail: true }),
       Object.assign(at(30.2635, 120.1235), { id: 'hz_zju', name: '浙江大学（玉泉）', w: 900, d: 700, year: 1928, kind: 'campus' }),
       Object.assign(at(30.2437, 120.1826), { id: 'hz_station', name: '杭州站', w: 300, d: 160, year: 1999, kind: 'rail' }),
       Object.assign(at(30.2683, 120.1395), { id: 'hz_huanglong', name: '黄龙体育中心', w: 400, d: 300, year: 2000, kind: 'stadium' }),
