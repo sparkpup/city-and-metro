@@ -171,7 +171,24 @@
     previewCamera(0);
   };
 
-  let last = performance.now(), fpsAcc = 0, fpsN = 0;
+  // FPS 显示（按 F3 开关）：游戏已算 R.stats.fps，这里把它显示出来便于性能排查
+  let fpsEl = null;
+  function updateFpsHud() {
+    if (!fpsEl || fpsEl.style.display === 'none') return;
+    const s = R.stats || {};
+    fpsEl.textContent = 'FPS ' + (s.fps || 0).toFixed(0) + '  |  图块 ' + (s.chunksDrawn || 0) + '  |  LOD ' + (s.rasterLevel != null ? s.rasterLevel : '-');
+  }
+  CM.toggleFps = function () {
+    if (!fpsEl) {
+      fpsEl = document.createElement('div');
+      fpsEl.id = 'fpsHud';
+      fpsEl.style.cssText = 'position:fixed;top:6px;right:8px;z-index:99999;font:12px/1.4 ui-monospace,monospace;color:#fff;background:rgba(0,0,0,.58);padding:3px 8px;border-radius:6px;pointer-events:none;';
+      document.body.appendChild(fpsEl);
+    } else { fpsEl.style.display = fpsEl.style.display === 'none' ? '' : 'none'; }
+    updateFpsHud();
+    return fpsEl.style.display !== 'none';
+  };
+  let last = performance.now(), fpsAcc = 0, fpsN = 0, resAcc = 0, resLow = 0;
   function frame(t) {
     const workStarted = performance.now();
     const dt = Math.min(0.1, Math.max(0, (t - last) / 1000));
@@ -187,12 +204,29 @@
       previewCamera(dt);
       try { CM.agents.updatePreview(dt, preview, R); } catch (e) { console.error(e); }
     }
+    // 首页/选图屏会用 preview 巡游城市当背景，**不能跳过渲染**，否则首页白屏/闪动
     try { R.render(dt, ui); } catch (e) { console.error(e); }
     try { CM.Soundscape.tick(dt); } catch (e) { console.error(e); }
     ui.tick(dt);
     R.noteFrameTime(performance.now() - workStarted);
     fpsAcc += dt; fpsN++;
-    if (fpsAcc > 1) { R.stats.fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; }
+    if (fpsAcc > 1) {
+      R.stats.fps = fpsN / fpsAcc; fpsAcc = 0; fpsN = 0; updateFpsHud();
+      // 自适应分辨率：每 2 秒判定一次（仅游戏中，菜单不调）——帧率低就降内部分辨率贴回 50+，够高再回升
+      if (++resAcc >= 2) {
+        resAcc = 0;
+        const inGame = CM.game && !(ui.screen && !ui.screen.classList.contains('hidden'));
+        if (inGame && R.setResScale) {
+          const fps = R.stats.fps, s = R.resScale || 1;
+          // 只降不升 + 防抖：连续两次采样都低于 48 才降一档；不再自动回升（回升会与降档来回拉扯 → 周期性改尺寸卡顿）
+          if (fps < 48) resLow++; else resLow = 0;
+          if (resLow >= 2 && s > 0.73) {
+            R.setResScale(s - 0.12); resLow = 0;
+            try { R.render(0, ui); } catch (e) { console.error(e); }   // 改分辨率后立刻重绘，消除一帧白闪
+          }
+        }
+      }
+    }
     requestAnimationFrame(frame);
   }
   window.addEventListener('beforeunload', function () { if (CM.game && !ui.isSaved()) ui.doAutosave(); });

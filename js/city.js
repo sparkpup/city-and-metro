@@ -75,6 +75,9 @@
     this.activateLandmarks(startYear);
 
     // 1990 年人口与就业（估算）
+    // center 影响半径按图幅缩放：大图（sz/cq）的 center 若仍用固定 r，覆盖不到 → 大片 rural（热力图空白、无建筑）。
+    // RS 以 12000 格为基准，夹在 0.8~2.4，避免小图过度城市化。
+    const RS = Math.max(1.0, Math.min(2.4, Math.sqrt(N / 10000)));   // 只放大不缩小：小图不变、大图补满
     let sumP = 0, sumJ = 0;
     for (let c = 0; c < N; c++) {
       const L = this.lu[c];
@@ -82,7 +85,7 @@
       const i = c % W, j = (c / W) | 0, cx = i + 0.5, cy = j + 0.5;
       let p = D.rural.pop, jb = D.rural.jobs;
       for (const ct of D.centers) {
-        const d = U.dist(cx, cy, ct.x, ct.y) / (ct.r * 4);
+        const d = U.dist(cx, cy, ct.x, ct.y) / (ct.r * 4 * RS);
         const w = Math.exp(-d * d);
         p += ct.pop * w; jb += ct.jobs * w;
       }

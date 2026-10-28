@@ -93,7 +93,7 @@
     this.cancelDrag();
     this.ptr = null; this.ui.setTooltip(null);
     const p = Array.from(T.values());
-    this.pinch = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, mx: (p[0].x + p[1].x) / 2, my: (p[0].y + p[1].y) / 2 };
+    this.pinch = { d: Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, a: Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x), mx: (p[0].x + p[1].x) / 2, my: (p[0].y + p[1].y) / 2 };
     if (CM.Follow && CM.Follow.active()) CM.Follow.stop();
     return true;
   };
@@ -103,9 +103,14 @@
     T.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (!this.pinch || T.size < 2 || !this.game()) return false;
     const p = Array.from(T.values()), d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y) || 1, mx = (p[0].x + p[1].x) / 2, my = (p[0].y + p[1].y) / 2;
+    const a = Math.atan2(p[1].y - p[0].y, p[1].x - p[0].x);
+    // 冲突判定：两指连线「角度变化」→ 旋转，「间距变化」→ 缩放，二者同时生效；
+    // 旋转需 |dA| > 0.02rad(~1.1°) 才触发，避免缩放时两指抖动误触旋转。
+    let dA = a - this.pinch.a; while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+    if (this.R.rotateBy && Math.abs(dA) > 0.02) this.R.rotateBy(dA);
     this.R.panBy(mx - this.pinch.mx, my - this.pinch.my);
     this.R.zoomAt(mx, my, d / this.pinch.d);
-    this.pinch.d = d; this.pinch.mx = mx; this.pinch.my = my;
+    this.pinch.d = d; this.pinch.a = a; this.pinch.mx = mx; this.pinch.my = my;
     return true;
   };
   Tools.prototype.touchUp = function (e) {
@@ -122,7 +127,17 @@
     this.lastPointerType = e.pointerType || 'mouse';
     try { if (this.R.cv.setPointerCapture) this.R.cv.setPointerCapture(e.pointerId); } catch (err) { /* 指针已失效时忽略 */ }
     this.ptr = { x: e.clientX, y: e.clientY, sx: e.clientX, sy: e.clientY, button: e.button, moved: false, shift: e.shiftKey, alt: e.altKey, t: performance.now() };
-    if (e.button === 1) { this.ptr.pan = true; e.preventDefault(); return; }
+    if (e.button === 1) {
+      // 双击中键 = 复位正北。浏览器对非左键不派发 dblclick，故手动检测「两次中键按下」（350ms、8px 内）
+      const now = performance.now();
+      if (this._midDown && now - this._midDown.t < 350 && Math.hypot(e.clientX - this._midDown.x, e.clientY - this._midDown.y) < 8) {
+        this._midDown = null; if (this.R.setRot) this.R.setRot(0); e.preventDefault(); return;
+      }
+      this._midDown = { t: now, x: e.clientX, y: e.clientY };
+      // 中键=绕按下的那点做轨道旋转：按下即记录「旋转中心」，鼠标绕它转的方向/速度 = 地图旋转
+      this.ptr.rot = true; this.rotCenter = { x: e.clientX, y: e.clientY }; this.rotLastA = null;
+      this.R.rotCenter = this.rotCenter; e.preventDefault(); return;
+    }
     // 延长手柄：进入绘线，拖到目标位置松开即连线（只点击则从该端点开始逐站绘制）
     const ext = e.button === 0 ? this.pickExtend(e.clientX, e.clientY) : null;
     if (ext) { this.ui.startDraw(ext.station, ext.line, false); this.ptr.extend = true; return; }
@@ -141,6 +156,21 @@
       if (!this.ptr.moved && Math.hypot(e.clientX - this.ptr.sx, e.clientY - this.ptr.sy) > (e.pointerType === 'touch' ? 10 : 4)) this.ptr.moved = true;
       if (this.drag) { this.dragTo(e.clientX, e.clientY); }
       else if (this.ptr.extend) { /* 拖动延长手柄：只更新绘线预览 */ }
+      else if (this.ptr.rot) {
+        // 轨道旋转：鼠标绕中心点扫过的角度 = 地图旋转角。离开中心 >18px 才计角，避免中心抖动。
+        const c = this.rotCenter || { x: this.ptr.sx, y: this.ptr.sy };
+        const vx = e.clientX - c.x, vy = e.clientY - c.y;
+        if (Math.hypot(vx, vy) > 18) {
+          const a = Math.atan2(vy, vx);
+          if (this.rotLastA != null) {
+            let dA = a - this.rotLastA;
+            while (dA > Math.PI) dA -= 2 * Math.PI; while (dA < -Math.PI) dA += 2 * Math.PI;
+            if (this.R.rotateBy) this.R.rotateBy(dA);
+          }
+          this.rotLastA = a;
+        }
+        this.ptr.moved = true;
+      }
       else if (this.ptr.moved || this.ptr.pan) { if (CM.Follow && CM.Follow.active()) CM.Follow.stop(); R.panBy(dx, dy); this.ptr.pan = true; }
       this.ptr.x = e.clientX; this.ptr.y = e.clientY;
     }
@@ -148,13 +178,16 @@
     this.updateHover(e.clientX, e.clientY, e.shiftKey || e.altKey);
     // 行政区划指示：记录光标位置与光标下的区划；已有车站/线路提示时不抢它的提示条
     R.mouseX = e.clientX; R.mouseY = e.clientY;
-    R.hoverAdmin = R.pickAdmin(e.clientX, e.clientY);
-    if (!this.hint && R.hoverAdmin) this.ui.setTooltip(R.adminInfo(R.hoverAdmin), e.clientX, e.clientY);
+    // 行政区划信息卡只由 canvas 的 drawAdminInfo 绘制（主题色、跟随光标、可钉住）。
+    // 这里若再调 ui.setTooltip 会与 canvas 卡双层叠加（实测：深色 DOM 气泡盖住主题色卡片上半部）。
+    // 有车站/线路悬停（this.hover）或建站提示（this.hint）时让位，不抢它们的提示条。
+    R.hoverAdmin = (this.hover || this.hint) ? null : R.pickAdmin(e.clientX, e.clientY);
     if (e.pointerType === 'touch') this.ui.setTooltip(null);   // 触屏没有悬停：拖动地图时不显示提示
   };
   Tools.prototype.onUp = function (e) {
     const g = this.game(); const p = this.ptr; this.ptr = null;
     if (!g || !p) return;
+    if (p.rot) { this.R.rotCenter = null; this.rotCenter = null; this.rotLastA = null; return; }   // 中键旋转结束：清除中心指示，不做点击/选择
     if (this.drag) { const ch = this.drag.changed; this.drag = null; g.endLive(ch); if (ch) sfx('place'); return; }
     if (p.extend) { if (p.moved && this.tool === 'line' && this.chain) this.onClick(e.clientX, e.clientY, false); return; }
     if (p.pan && p.moved) return;
@@ -508,6 +541,7 @@
     }
   };
   Tools.prototype.onDbl = function (e) {
+    if (e.button === 1) { if (this.R.setRot) this.R.setRot(0); return; }   // 双击中键=复位正北
     const g = this.game(); if (!g || this.tool !== 'edit') return;
     const h = this.pickHandle(e.clientX, e.clientY);
     if (h && h.kind === 'bend') {
@@ -600,6 +634,7 @@
       case 'n': this.ui.toggleTheme(); break;
       case 'm': this.ui.toggleSound(); break;
       case 'f': this.R.fitAll(); break;
+      case 'f3': e.preventDefault(); if (CM.toggleFps) CM.toggleFps(); break;   // F3：显示/隐藏帧率
       case '=': case '+': this.R.zoomAt(this.R.w / 2, this.R.h / 2, 1.3); break;
       case '-': case '_': this.R.zoomAt(this.R.w / 2, this.R.h / 2, 1 / 1.3); break;
       case 'backspace': if (this.tool === 'line' && this.bends.length) { this.bends.pop(); e.preventDefault(); } else if (g.draft) { e.preventDefault(); this.ui.undo(); } break;

@@ -76,7 +76,7 @@
   function Renderer(canvas) {
     this.cv = canvas; this.ctx = canvas.getContext('2d');
     this.dpr = 1; this.w = 0; this.h = 0;
-    this.cam = { cx: 30, cy: 40, zoom: 13, tz: 13, anchor: null, view: 0, t: 0, under: 0, tu: 0, fly: null };
+    this.cam = { cx: 30, cy: 40, zoom: 13, tz: 13, anchor: null, view: 0, t: 0, under: 0, tu: 0, fly: null, rot: 0, trot: 0 };
     this.ground = new Map(); this.iso = new Map(); this.cachePx = 0;
     this.overview = null; this.overviewStale = true; this.overviewAt = 0;
     this.frame = 0; this.time = 0;
@@ -86,6 +86,8 @@
     this.labelsOn = true;
     this.M = [1, 0, 0, 1]; this.z = 13; this.ox = 0; this.oy = 0; this.hs = 0; this.det = 1;
     this.stats = { fps: 60, chunksDrawn: 0 };
+    this.showBuildings = true;   // 建筑显示开关（左侧按钮切换；旋转时仍会自动降级为平面以免错位）
+    this.resScale = 1;           // 自适应分辨率系数（1=正常；帧率不足时自动下调，见 setResScale）
     this.linkGrid = null; this.linkGridVer = -1;
     this.th = TH; this.themeName = 'light';
     this.mapLabelsOn = true; this.agentsOn = true;
@@ -340,18 +342,34 @@
     if (this.game) this.renderOverview(); else this.overviewStale = true;
   };
   Renderer.prototype.resize = function () {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(1.5, window.devicePixelRatio || 1) * (this.resScale || 1);   // 上限 1.5 × 自适应系数
     const w = window.innerWidth, h = window.innerHeight;
     if (w === this.w && h === this.h && dpr === this.dpr) return;
     this.dpr = dpr; this.w = w; this.h = h;
     this.cv.width = Math.round(w * dpr); this.cv.height = Math.round(h * dpr);
     this.cv.style.width = w + 'px'; this.cv.style.height = h + 'px';
   };
+  // 自适应分辨率：帧率不够就降内部分辨率（填充率同步下降），够高再回升。缩放 0.72~1。
+  Renderer.prototype.setResScale = function (s) {
+    s = Math.max(0.72, Math.min(1, s));
+    if (Math.abs(s - (this.resScale || 1)) < 0.02) return;
+    this.resScale = s; this.dpr = 0; this.resize();
+  };
 
   // ---------------- 相机 ----------------
   Renderer.prototype.computeTransform = function () {
     const c = this.cam, t = U.easeInOut(c.t);
-    const m00 = U.lerp(1, ISO[0], t), m01 = U.lerp(0, ISO[1], t), m10 = U.lerp(0, ISO[2], t), m11 = U.lerp(1, ISO[3], t);
+    let m00 = U.lerp(1, ISO[0], t), m01 = U.lerp(0, ISO[1], t), m10 = U.lerp(0, ISO[2], t), m11 = U.lerp(1, ISO[3], t);
+    // 地图旋转：把 R(θ) 左乘到线性变换 M 上。θ=0 时 m00..m11 保持原值，与原行为逐位一致。
+    // 因为 P / unproject / screenToWorldDelta 全部由 M 与 det 推出，旋转后位置、反投影、平移、缩放自动适配；
+    // 标签文字在旋转后的坐标上绘制，仍是正的（不旋转 ctx）。
+    const rot = c.rot || 0;
+    if (rot) {
+      const cs = Math.cos(rot), sn = Math.sin(rot);
+      const b00 = m00, b01 = m01, b10 = m10, b11 = m11;
+      m00 = cs * b00 - sn * b10; m01 = cs * b01 - sn * b11;
+      m10 = sn * b00 + cs * b10; m11 = sn * b01 + cs * b11;
+    }
     this.M = [m00, m01, m10, m11]; this.z = c.zoom;
     this.det = m00 * m11 - m01 * m10;
     this.ox = this.w / 2 - (m00 * c.cx + m01 * c.cy) * c.zoom;
@@ -359,6 +377,9 @@
     this.hs = c.zoom * HSF * t;
     this.tEase = t;
   };
+  // 旋转控制：trot 为目标角（弧度），updateCamera 里缓动到 rot，保证丝滑。
+  Renderer.prototype.rotateBy = function (d) { this.cam.trot = (this.cam.trot || 0) + d; };
+  Renderer.prototype.setRot = function (a) { this.cam.trot = a; };
   Renderer.prototype.P = function (x, y, h, out) {
     const M = this.M, z = this.z;
     out = out || {};
@@ -418,6 +439,12 @@
     const tv = c.view;
     if (c.t !== tv) { const sp = dt / 0.5; c.t = tv > c.t ? Math.min(tv, c.t + sp) : Math.max(tv, c.t - sp); }
     if (c.under !== c.tu) { const sp = dt / 0.35; c.under = c.tu > c.under ? Math.min(c.tu, c.under + sp) : Math.max(c.tu, c.under - sp); }
+    // 旋转平滑：rot 以指数缓动逼近 trot（与缩放同一手感，帧率无关）
+    if (c.trot != null && Math.abs(c.rot - c.trot) > 1e-4) {
+      const k = 1 - Math.exp(-dt * 12);
+      c.rot += (c.trot - c.rot) * k;
+      if (Math.abs(c.trot - c.rot) < 1e-4) c.rot = c.trot;
+    }
     this.clampCam();
     this.computeTransform();
   };
@@ -1892,11 +1919,14 @@
         const a = this.P(ci * C, cj * C, 0);
         const visible = this.isoVisible(e, ilvl, ci, cj, C);
         if (visible && (!e || e.stale)) queue.push({ kind: 'i', key: key, lvl: ilvl, ci: ci, cj: cj, C: C, d: Math.abs((ci + 0.5) * C - cam.cx) + Math.abs((cj + 0.5) * C - cam.cy) - 0.5 });
-        if (visible && e && !e.empty) {
+        // 旋转时把建筑图块整体绕锚点旋转（保证旋转后仍可见、位置对齐；高度轴随角度略倾斜，可接受）
+        if (visible && e && !e.empty && this.showBuildings !== false) {
           e.used = this.frame;
           const fade = Math.min(1, (this.time - e.born) / 0.25);
           ctx.globalAlpha = bAlpha * fade;
-          ctx.drawImage(e.cv, a.x - e.ax * sc, a.y - e.ay * sc, e.cv.width * sc, e.cv.height * sc);
+          const rot = this.cam.rot || 0;
+          if (rot) { ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(rot); ctx.drawImage(e.cv, -e.ax * sc, -e.ay * sc, e.cv.width * sc, e.cv.height * sc); ctx.restore(); }
+          else ctx.drawImage(e.cv, a.x - e.ax * sc, a.y - e.ay * sc, e.cv.width * sc, e.cv.height * sc);
         } else if (visible && e) e.used = this.frame;
         const lks = lmBy.get(ci + ':' + cj);
         if (lks) for (const k of lks) {
@@ -1906,7 +1936,9 @@
           const sp = this.landmarkSprite(k, landmarkLvl), lm = D.landmarks[k], a = this.P(lm.x, lm.y, 0), ls = z / landmarkLvl;
           if (!this.screenVisible(a.x - sp.ax * ls, a.y - sp.ay * ls, sp.cv.width * ls, sp.cv.height * ls, 2)) { sp.used = this.frame - 1; continue; }
           ctx.globalAlpha = bAlpha * Math.min(1, (this.time - sp.born) / 0.25);
-          ctx.drawImage(sp.cv, a.x - sp.ax * ls, a.y - sp.ay * ls, sp.cv.width * ls, sp.cv.height * ls);
+          const lp = this.cam.rot || 0;
+          if (lp) { ctx.save(); ctx.translate(a.x, a.y); ctx.rotate(lp); ctx.drawImage(sp.cv, -sp.ax * ls, -sp.ay * ls, sp.cv.width * ls, sp.cv.height * ls); ctx.restore(); }
+          else ctx.drawImage(sp.cv, a.x - sp.ax * ls, a.y - sp.ay * ls, sp.cv.width * ls, sp.cv.height * ls);
         }
       }
       ctx.globalAlpha = 1;
@@ -1930,6 +1962,32 @@
     this.drawLabels(ctx, ui);
     // 行政区划指示：信息卡不进标注缓存（标注缓存只在相机变化时重画，悬浮要跟手）
     this.drawAdminInfo(ctx);
+    // 旋转中心指示：中键按下时在按下点显示十字圆环，鼠标绕它做轨道旋转
+    if (this.rotCenter) {
+      const dpr = this.dpr, c = this.rotCenter, acc = 'rgba(58,132,240,0.95)';
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      ctx.save();
+      // 淡色外光环
+      ctx.strokeStyle = 'rgba(58,132,240,0.16)'; ctx.lineWidth = 7;
+      ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI * 2); ctx.stroke();
+      // 细环
+      ctx.strokeStyle = acc; ctx.lineWidth = 1.4;
+      ctx.beginPath(); ctx.arc(c.x, c.y, 12, 0, Math.PI * 2); ctx.stroke();
+      // 四向短刻度（十字，留空隙，圆头）
+      ctx.lineWidth = 2; ctx.lineCap = 'round';
+      for (let k = 0; k < 4; k++) {
+        const a = k * Math.PI / 2;
+        ctx.beginPath();
+        ctx.moveTo(c.x + Math.cos(a) * 15, c.y + Math.sin(a) * 15);
+        ctx.lineTo(c.x + Math.cos(a) * 21, c.y + Math.sin(a) * 21);
+        ctx.stroke();
+      }
+      ctx.lineCap = 'butt';
+      // 中心点
+      ctx.fillStyle = acc; ctx.beginPath(); ctx.arc(c.x, c.y, 2.4, 0, Math.PI * 2); ctx.fill();
+      ctx.restore();
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
     if (this.hl) this.drawHighlight(ctx);
     if (ui && ui.drawOverlay) ui.drawOverlay(ctx, this);
     // ---- 缓存渲染队列 ----
@@ -3100,7 +3158,7 @@
     }
     ctx.globalAlpha = this.mapLabA;
     // 地标
-    if (z >= 13 && this.mapLabA > 0.01 && this.layer === 'none') {
+    if (z >= 12 && this.mapLabA > 0.01 && this.layer === 'none') {
       for (let k = 0; k < D.landmarks.length; k++) {
         if (!city.landmarkOn[k]) continue;
         const lm = D.landmarks[k];

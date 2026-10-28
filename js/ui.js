@@ -106,7 +106,9 @@
       vb('iso', 'view3d', '2.5D 城市', 'T', function () { self.setView(true); }),
       vb('under', 'under', '地下视图', 'U', function () { self.toggleUnder(); }),
       vb('netmap', 'network', '线路示意图', 'K', function () { self.openNetMap(); }, 'plain'),
+      vb('buildings', 'building', '显示 / 隐藏建筑', null, function () { self.toggleBuildings(); }),
       h('div', { class: 'dock-sep' }));
+    this.tbtns.buildings.classList.add('on');   // 默认显示建筑
     // 分析图层：每个图层一个按钮，再次点击关闭；开启时按钮显示该图层的颜色
     this.dockBtns = {};
     let lastGroup = null;
@@ -624,6 +626,14 @@
   UI.prototype.setView = function (iso) { if (this.R.cam.view !== (iso ? 1 : 0)) snd('swoosh'); this.R.setView(iso); this.renderToolbar(); };
   UI.prototype.toggleView = function () { this.setView(this.R.cam.view !== 1); };
   UI.prototype.toggleUnder = function () { snd('swoosh'); this.R.setUnder(this.R.cam.tu !== 1); this.renderToolbar(); };
+  // 建筑显示 / 隐藏（左侧按钮；旋转时图块会自动降级为平面，此开关用于整体隐藏建筑）
+  UI.prototype.toggleBuildings = function () {
+    const R = this.R; if (!R) return;
+    R.showBuildings = R.showBuildings === false;   // 取反：false→true，true→false
+    const b = this.tbtns.buildings; if (b) b.classList.toggle('on', R.showBuildings !== false);
+    if (R.markDirty) R.markDirty();
+    snd('toggle');
+  };
   // 浅色 / 深色：顶栏与开始界面上的按钮直接切换（不在设置里）
   UI.prototype.toggleTheme = function () { CM.Settings.set('theme', document.documentElement.dataset.theme === 'dark' ? 'light' : 'dark'); snd('toggle'); };
   UI.prototype.renderThemeBtns = function () {
