@@ -182,6 +182,14 @@
       // —— 2026-10-29 补高校地标（campus：不阻止设站；建城期仅对该格人口减半，不影响周边客流）——
       at(31.3060, 121.5000, { id: 'sh_sufe', name: '上海财经大学', w: 320, d: 240, year: 1917, kind: 'campus' }),
       at(31.2760, 121.4830, { id: 'sh_shisu', name: '上海外国语大学（虹口校区）', w: 260, d: 200, year: 1949, kind: 'campus' }),
+
+      // —— 2026-10-29 补文化/医疗/体育类地标（坐标均经 probe-cell 验 landFrac）——
+      at(31.2106, 121.4438, { id: 'sh_lib', name: '上海图书馆', w: 200, d: 160, year: 1952, kind: 'box' }),
+      at(31.2342, 121.4618, { id: 'sh_nhm', name: '上海自然博物馆', w: 200, d: 160, year: 2015, kind: 'gallery' }),
+      at(31.1965, 121.4818, { id: 'sh_psa', name: '上海当代艺术博物馆', w: 200, d: 160, year: 2012, kind: 'gallery' }),
+      at(31.2318, 121.4748, { id: 'sh_concerthall', name: '上海音乐厅', w: 150, d: 130, year: 1930, kind: 'concert' }),
+      at(31.2130, 121.4650, { id: 'sh_ruijin_lm', name: '瑞金医院', w: 200, d: 150, year: 1907, kind: 'box' }),
+      at(31.1832, 121.4368, { id: 'sh_indoorstadium', name: '上海体育馆', w: 220, d: 200, year: 1975, kind: 'stadium' }),
     ],
     facilities: [
       // —— 交通枢纽（pax） ——
@@ -241,6 +249,10 @@
       { id: 'sh_f_plaza66', n: '恒隆广场', t: 'shop', at: ll(31.2287, 121.4465), w: 0.025 },
       // 环贸 iapm：淮海中路—陕西南路，landFrac 1.00、pop 1285
       { id: 'sh_f_iapm', n: '环贸 iapm 商场', t: 'shop', at: ll(31.2150, 121.4580), w: 0.022 },
+      // 东华大学（延安路校区）：长宁中山公园东，landFrac 1.00、pop 689
+      { id: 'sh_f_dhu', n: '东华大学（延安路校区）', t: 'uni', at: ll(31.2090, 121.4185), w: 0.012 },
+      // 静安嘉里中心：南京西路，landFrac 1.00、pop 1603
+      { id: 'sh_f_kerry', n: '静安嘉里中心', t: 'shop', at: ll(31.2255, 121.4440), w: 0.02 },
     
       // —— 商务区（sh） ——
       // 浦东三个商务区的 w 曲线承担「浦东从无到有」——引擎的 centers 是静态的，逐年趋势只能靠设施（见 §1.2 末尾说明）

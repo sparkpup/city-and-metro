@@ -99,6 +99,13 @@
       // —— 2026-10-29 补高校地标（campus：不阻止设站；建城期仅对该格人口减半，不影响周边客流）——
       at(29.8245, 106.4230, { id: 'cq_swu', name: '西南大学', w: 600, d: 450, year: 2005, kind: 'campus' }),
       at(29.5320, 106.5950, { id: 'cq_cqupt', name: '重庆邮电大学', w: 360, d: 280, year: 1950, kind: 'campus' }),
+      // —— 2026-10-29 补文化/医疗/史迹类地标（坐标均经 probe-cell 验 landFrac）——
+      at(29.5356, 106.4562, { id: 'cq_lib', name: '重庆图书馆', w: 200, d: 160, year: 1947, kind: 'box' }),
+      at(29.8395, 106.4128, { id: 'cq_nhm', name: '重庆自然博物馆', w: 220, d: 160, year: 2015, kind: 'gallery' }),
+      at(29.5745, 106.5745, { id: 'cq_grand', name: '重庆大剧院', w: 200, d: 160, year: 2009, kind: 'opera' }),
+      at(29.5735, 106.5775, { id: 'cq_scitech', name: '重庆科技馆', w: 200, d: 150, year: 2009, kind: 'expo' }),
+      at(29.5592, 106.5698, { id: 'cq_children', name: '重庆儿童医院', w: 200, d: 150, year: 1956, kind: 'box' }),
+      at(29.5600, 106.5840, { id: 'cq_huguang', name: '湖广会馆', w: 180, d: 150, year: 1759, kind: 'traditional' }),
     ],
     facilities: [
       { id: 'cq_f_beizhan', n: '重庆北站', t: 'rail', lm: 'cq_beizhan', pax: [[2006, 6], [2015, 9], [2020, 10], [2030, 9]] },
@@ -132,6 +139,10 @@
       { id: 'cq_f_mixc', n: '重庆万象城', t: 'shop', at: ll(29.5280, 106.5090), w: 0.025 },
       // 龙湖时代天街：大坪，landFrac 1.00、pop 598（1/2 号线换乘枢纽旁）
       { id: 'cq_f_dp', n: '龙湖时代天街（大坪）', t: 'shop', at: ll(29.5362, 106.5215), w: 0.022 },
+      // 重庆工商大学：南岸学府大道，landFrac 1.00、pop 2634
+      { id: 'cq_f_ctbu', n: '重庆工商大学', t: 'uni', at: ll(29.5200, 106.5600), w: 0.015 },
+      // 南坪协信星光广场：南岸南坪，landFrac 1.00、pop 10834（本批最高客流位）
+      { id: 'cq_f_npshop', n: '南坪协信星光广场', t: 'shop', at: ll(29.5240, 106.5680), w: 0.02 },
     ],
     histTasks: [
       { id: 'cq1', appear: [2004, 11], deadline: [2008, 12], type: 'connect', reward: 30000,

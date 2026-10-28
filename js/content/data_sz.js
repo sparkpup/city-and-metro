@@ -161,6 +161,13 @@
       // —— 2026-10-29 补高校地标（campus：不阻止设站；建城期仅对该格人口减半，不影响周边客流）——
       at(31.3080, 120.5480, { id: 'sz_kcjf', name: '苏州科技大学（江枫校区）', w: 360, d: 280, year: 1983, kind: 'campus' }),
       at(31.2246, 120.6236, { id: 'sz_citycol', name: '苏州城市学院', w: 300, d: 240, year: 1998, kind: 'campus' }),
+      // —— 2026-10-29 补文化/医疗/公园/剧院类地标（坐标均经 probe-cell 验 landFrac）——
+      at(31.3020, 120.6200, { id: 'sz_lib', name: '苏州图书馆', w: 200, d: 150, year: 1914, kind: 'box' }),
+      at(31.3225, 120.6075, { id: 'sz_fyy', name: '苏州大学附属第一医院', w: 220, d: 160, year: 1883, kind: 'box' }),
+      at(31.3130, 120.6790, { id: 'sz_centralpark', name: '苏州中央公园', w: 400, d: 300, year: 2003, kind: 'campus' }),
+      at(31.2960, 120.5380, { id: 'sz_szparadise', name: '苏州乐园·狮子山', w: 400, d: 300, year: 1997, kind: 'campus' }),
+      at(31.3145, 120.6265, { id: 'sz_kunqu', name: '中国昆曲博物馆', w: 160, d: 140, year: 2003, kind: 'traditional' }),
+      at(31.1350, 120.6100, { id: 'sz_wjtheatre', name: '苏州湾大剧院', w: 220, d: 170, year: 2020, kind: 'opera' }),
       // —— 2026-10-28 南扩补点（吴江/汾湖）——
       // 同里古镇：镇域中心 OSM 实测 31.1552/120.7132；year 取退思园落成 1885（古镇本体成于宋代，退思园为可考标志建筑）
       at(31.1552, 120.7132, { id: 'sz_tongli', name: '同里古镇', w: 700, d: 560, year: 1885, kind: 'traditional' }),
@@ -231,6 +238,10 @@
       { id: 'sz_f_szcenter', n: '苏州中心商场', t: 'shop', at: ll(31.3162, 120.6730), w: 0.025 },
       // 龙湖狮山天街：高新区狮山，landFrac 1.00、pop 526（本批最高客流位）
       { id: 'sz_f_sstj', n: '龙湖狮山天街', t: 'shop', at: ll(31.2950, 120.5460), w: 0.02 },
+      // 苏州工艺美术职业技术学院：吴中越溪石湖东，landFrac 1.00、pop 972
+      { id: 'sz_sgmy', n: '苏州工艺美术职业技术学院', t: 'uni', at: ll(31.2600, 120.6320), w: 0.012 },
+      // 久光百货：园区湖西 CBD，landFrac 1.00、pop 270
+      { id: 'sz_jg', n: '久光百货（园区）', t: 'shop', at: ll(31.3135, 120.6728), w: 0.02 },
     ],
     // districtLabels 只查 Geo.admin 且需精确同名（city.js:279-287），这里全部换成 geo_sz.js admin level=8 实测存在的名字。
     districtLabels: [['姑苏', ['平江街道', '双塔街道', '沧浪街道', '金阊街道', '虎丘街道', '白洋湾街道']],
