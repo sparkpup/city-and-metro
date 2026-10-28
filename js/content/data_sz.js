@@ -129,7 +129,7 @@
       at(31.3090, 120.5730, { id: 'sz_stg', name: '山塘街', w: 900, d: 60, year: 825, kind: 'traditional' }),
       // —— 古城与城门 ——
       at(31.2960, 120.6060, { id: 'sz_panmen', name: '盘门（水陆城门）', w: 200, d: 200, year: 1351, kind: 'tower' }),
-      at(31.3120, 120.6060, { id: 'sz_gucheng', name: '姑苏古城墙遗址', w: 1200, d: 1200, year: 514, kind: 'traditional' }),   // 单块轮廓近似，作用是保护判定，不代表真实连续墙体
+      at(31.3120, 120.6060, { id: 'sz_gucheng', name: '姑苏古城墙遗址', w: 300, d: 300, year: 514, kind: 'traditional' }),   // 细标记：仅作保护判定与标注，不再用大块轮廓抹掉古城人口（周边观前·平江中心会自然补出密度）
       // —— 现代地标 ——
       at(31.3235, 120.6270, { id: 'sz_beimen', name: '苏州博物馆（贝聿铭）', w: 160, d: 130, year: 2006, kind: 'gallery' }),
       at(31.3180, 120.6740, { id: 'sz_dongfang', name: '东方之门', w: 120, d: 120, year: 2015, kind: 'skyscraper', h: 301 }),

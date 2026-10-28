@@ -1765,6 +1765,8 @@
       gapCell = this.zoneToCells(zv, this.cellWeights('all'));
     }
     const stCol = function (k) { const hsh = (k * 2654435761) >>> 0; return [40 + (hsh & 127), 110 + ((hsh >> 7) & 100), 60 + ((hsh >> 14) & 140)]; };
+    let popRef = 40000;   // 人口密度图层归一化基准：取本图峰值（下限 40000，防止稀疏图整体过饱和）
+    if (lay === 'pop') { for (let c = 0; c < N; c++) { const v = city.pop[c] / 0.0625; if (v > popRef) popRef = v; } }
     for (let c = 0; c < W * H; c++) {
       let col = null, a = 0;
       const p = city.pop[c] / 0.0625, jb = city.jobs[c] / 0.0625;
@@ -1777,8 +1779,8 @@
         if (k >= 0 && w <= CFG.walk.maxAccessM) { col = stCol(k); a = 0.42 - 0.18 * U.clamp(w / CFG.walk.maxAccessM, 0, 1); }
         else if (p > 4000) { col = [215, 48, 39]; a = U.clamp(0.1 + p / 120000, 0, 0.38); }
       } else if (lay === 'pop') {
-        // 浅色单色渐变、半透明（最高约 0.5），道路与地名仍清楚可见
-        if (p > 200) { const t = U.clamp(Math.sqrt(p / 60000), 0, 1); col = U.ramp([[0, [255, 226, 150]], [0.5, [249, 158, 76]], [1, [222, 84, 52]]], t); a = 0.12 + 0.4 * t; }
+        // 对数刻度（log p 在阈值 200 与本图峰值间归一化）+ 5 段高对比渐变：中等密度不再被洗白，人口集中区清晰可辨
+        if (p > 200) { const t = U.clamp((Math.log(p) - Math.log(200)) / (Math.log(popRef) - Math.log(200)), 0, 1); col = U.ramp([[0, [255, 238, 184]], [0.22, [255, 206, 110]], [0.45, [247, 150, 58]], [0.7, [231, 92, 50]], [1, [170, 22, 33]]], t); a = 0.14 + 0.42 * t; }
       } else if (this.layer === 'jobs') {
         const t = p + jb;
         if (t > 300) { const sh = p / t; col = U.mixc([52, 104, 214], [240, 150, 60], sh); a = U.clamp(0.12 + 0.4 * Math.sqrt(t / 90000), 0, 0.5); }
