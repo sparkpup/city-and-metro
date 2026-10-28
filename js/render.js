@@ -3194,13 +3194,13 @@
         }
       }
     }
-    // 道路名
-    if (z >= 22 && this.layer === 'none' && this.mapLabA > 0.01) {
+    // 道路名（加强道路指示：提前一档出现，并把次干道 cls>=2 也标注，强化方向感）
+    if (z >= 21 && this.layer === 'none' && this.mapLabA > 0.01) {
       ctx.font = '10.5px ' + FONT;
       const seen = new Set();
       for (const k of CM.Geo.query(city.roadWayBk, v.x0, v.y0, v.x1, v.y1)) {
         const w = city.roadWays[k], gr = city.roadGroups[w.g];
-        if (gr.cls < 3 || !gr.name || (gr.flags & 6) || !city.roadsBuilt[w.g] || seen.has(gr.name)) continue;
+        if (gr.cls < 2 || !gr.name || (gr.flags & 6) || !city.roadsBuilt[w.g] || seen.has(gr.name)) continue;
         const p = w.p;
         let geom = this.roadLabelGeom.get(w);
         if (!geom) {

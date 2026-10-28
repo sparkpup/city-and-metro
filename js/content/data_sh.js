@@ -55,7 +55,7 @@
         note: '老工业区转型 + 复旦/同济高校带，五角场是市级副中心' },
     
       // —— 浦东 ——
-      { id: 'lujiazui', name: '浦东·陆家嘴·世纪大道', open: 1995, plan: 'cbd',
+      { id: 'lujiazui', name: '浦东·陆家嘴·世纪大道', open: 1993, plan: 'cbd',
         poly: poly([[31.2600, 121.4950], [31.2600, 121.5600], [31.2000, 121.5600], [31.2000, 121.4950]]) },
       { id: 'shibolin', name: '浦东·世博园区·三林', open: 2000, plan: 'expo',
         poly: poly([[31.2000, 121.4600], [31.2000, 121.5400], [31.1450, 121.5400], [31.1450, 121.4600]]),
@@ -368,7 +368,7 @@
     },
     bridgeYears: {},
     bridgeDefaultYear: 1990,
-    defaultRegion: { id: 'outer', name: '外围（川沙·南汇·松江方向）', open: 2003, plan: 'newtown', pop: 2.2e6 },
+    defaultRegion: { id: 'outer', name: '外围（川沙·南汇·松江方向）', open: 2000, plan: 'newtown', pop: 2.2e6 },
     plans: CM.DATA.plans,
     rural: { pop: 700, jobs: 160 },
     airport: null,   // 虹桥以 facilities 的 air 类型建模；浦东机场在图外，不设机场区域
