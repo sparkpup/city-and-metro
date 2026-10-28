@@ -100,7 +100,7 @@
         p *= f[0]; jb *= f[1];
         this.street[c] = 1; this.urbanYear[c] = startYear;
       }
-      if (L === LU.LANDMARK) { const lm = D.landmarks[this.protectedId[c] - 1]; if (lm && lm.kind === 'campus') { p *= 0.5; } else { p = 0; jb *= 0.3; } this.street[c] = 1; }
+      if (L === LU.LANDMARK) { const lm = D.landmarks[this.protectedId[c] - 1]; if (lm && lm.kind === 'campus') { p *= 0.5; } else if (lm && lm.keepPop) { /* keepPop：位于密集城区的遗址/城墙等标志物，保留周边人口密度仅用于热力图显示（不置零；保护判定不受影响） */ } else { p = 0; jb *= 0.3; } this.street[c] = 1; }
       const lf = this.landFrac[c];
       this.pop[c] = p * CELL_KM2 * lf; this.jobs[c] = jb * CELL_KM2 * lf;
       sumP += this.pop[c]; sumJ += this.jobs[c];
