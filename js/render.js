@@ -499,6 +499,118 @@
   };
   function makeCanvas(w, h) { const c = document.createElement('canvas'); c.width = Math.max(1, Math.ceil(w)); c.height = Math.max(1, Math.ceil(h)); return c; }
 
+  // ---------------- 未开放区云雾：无缝 fBm 噪声纹理（模块级惰性单例） ----------------
+  // 为什么不用逐个光斑：旧实现每个分块要 createRadialGradient 上百个，既慢又只能画出彼此孤立的圆点，
+  // 远看仍是一片平涂（用户两次反馈「和没有一样」）。改成一张 256×256 的可无缝平铺 fBm 纹理 + pattern：
+  // 纹理自带亮暗与阿尔法起伏，两层不同尺度叠出「大团 + 细絮」的体积感，逐分块成本只剩 3 次 fillRect。
+  // 纹理只在第一次需要时生成（几张离屏 canvas 由地面烘焙缓存摊销），绝不逐帧 / 逐分块重建。
+  const FOG_TEX = 256;                        // 纹理边长（texel）
+  const FOG_OCT = [4, 8, 16, 32];             // 4 个八度的格点数；格点按该数取模 → 左右、上下接缝连续（可平铺）
+  const FOG_COL = {
+    // thick = 云团厚处（不透明度最高、能压住地形的地方），wisp = 絮状亮处。
+    day: { thick: [207, 217, 230], wisp: [255, 255, 255] },   // 日间 厚处 #cfd9e6 冷灰蓝 → 絮状 #ffffff
+    night: { thick: [27, 36, 54], wisp: [44, 58, 82] },       // 夜间 厚处 #1b2436 → 絮状 #2c3a52
+  };
+  // 三层阿尔法（day / night 各一套）：[A 细密云絮, B 粗大云团, H 翻卷高光]
+  // 纹理自带阿尔法 t = 0.06 + 0.94·v（v = 噪声强度），叠两层的合成不透明度 = 1-(1-gA·t)(1-gB·t)：
+  //   日间 gA=0.30 gB=0.78 → 云团厚处 ≈0.85、云隙 ≈0.07（起伏 0.78，云团/云隙一眼分得开）
+  //   夜间 gA=0.26 gB=0.72 → 云团厚处 ≈0.79、云隙 ≈0.06
+  // 关键教训（实测过两轮）：薄端的阿尔法必须真的接近 0（露出地图），只把中灰往下压一点点，
+  // 整块雾就还是「一层淡色平涂」，和没有一样；云的可读性来自「厚处压住地图 / 云隙露出地图」的对比。
+  const FOG_LAYER = { day: [0.30, 0.78, 0], night: [0.26, 0.72, 0.07] };
+  const fogCache = { nz: null, cv: {}, pat: {} };
+
+  // 可无缝平铺的 fBm 值噪声：每个八度在 [0,G) 周期上取双线性 smoothstep 值噪声，
+  // 格点索引对 G 取模 → 纹理左右/上下的格点首尾相接，pattern 'repeat' 平铺时看不到接缝。
+  // 返回长度 FOG_TEX² 的 Float32Array，值域已拉伸到 0..1（fBm 原始值堆在 0.5 附近，不拉伸就是一片糊）。
+  function fogNoiseField() {
+    const N = FOG_TEX, out = new Float32Array(N * N);
+    let lo = 1, hi = 0;
+    for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) {
+      let s = 0, amp = 0.5, norm = 0;
+      for (let o = 0; o < FOG_OCT.length; o++) {
+        const G = FOG_OCT[o], sd = 41 + o * 97;
+        const u = x / N * G, v = y / N * G;
+        const xi = Math.floor(u), yi = Math.floor(v);
+        const fx = u - xi, fy = v - yi;
+        const sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy);
+        const i0 = xi % G, i1 = (xi + 1) % G, j0 = yi % G, j1 = (yi + 1) % G;
+        const a = U.hash2(i0, j0, sd), b = U.hash2(i1, j0, sd), c = U.hash2(i0, j1, sd), d = U.hash2(i1, j1, sd);
+        s += amp * (a + (b - a) * sx + (c - a) * sy + (a - b - c + d) * sx * sy);
+        norm += amp; amp *= 0.5;
+      }
+      const n = s / norm;
+      out[y * N + x] = n;
+      if (n < lo) lo = n; if (n > hi) hi = n;
+    }
+    const span = Math.max(1e-6, hi - lo);
+    for (let i = 0; i < out.length; i++) {
+      // 归一化后再做对比拉伸：掐掉两端 → 保证有明确的「厚」和「薄」，而不是全部挤在中灰
+      out[i] = U.smooth(U.clamp((out[i] - lo) / span * 1.6 - 0.30, 0, 1));
+    }
+    return out;
+  }
+
+  // 把噪声烘成 RGBA 纹理：RGB 由噪声强度在「絮状色 ↔ 厚处色」之间插值，A = 0.5 + 0.5·v。
+  // day / night 各一张（颜色不同），共用同一份噪声场；生成一次后常驻，换主题也不重算噪声。
+  function fogTexture(night) {
+    const key = night ? 'night' : 'day';
+    let cv = fogCache.cv[key];
+    if (cv) return cv;
+    const N = FOG_TEX, nz = fogCache.nz || (fogCache.nz = fogNoiseField()), C = FOG_COL[key];
+    cv = makeCanvas(N, N);
+    const cx = cv.getContext('2d'), img = cx.createImageData(N, N), p = img.data;
+    for (let i = 0; i < N * N; i++) {
+      const v = nz[i], q = i * 4;
+      p[q] = C.wisp[0] + (C.thick[0] - C.wisp[0]) * v;
+      p[q + 1] = C.wisp[1] + (C.thick[1] - C.wisp[1]) * v;
+      p[q + 2] = C.wisp[2] + (C.thick[2] - C.wisp[2]) * v;
+      p[q + 3] = 15 + 240 * v;                        // 0.06…1.0，再乘每层 globalAlpha（见 FOG_LAYER）
+    }
+    cx.putImageData(img, 0, 0);
+    fogCache.cv[key] = cv;
+    return cv;
+  }
+
+  // pattern 也缓存（两层各一个对象——同一张纹理铺两次，不给 pattern 设变换，尺度交给 ctx 变换）：
+  // 平移/缩放相位在绘制时用 ctx.translate/scale 施加，纹素→世界的换算保持在「世界锚定」，
+  // 相邻分块同相位 → 分块接缝处云雾连续；同一纹理不同尺度 → 大团与细絮错开相位叠合。
+  function fogPattern(night) {
+    const key = night ? 'night' : 'day';
+    let ps = fogCache.pat[key];
+    if (ps) return ps;
+    const tex = fogTexture(night);
+    const cx = makeCanvas(1, 1).getContext('2d');   // pattern 只是「纹理 + 重复规则」，与从哪个 ctx 创建无关
+    ps = fogCache.pat[key] = [cx.createPattern(tex, 'repeat'), cx.createPattern(tex, 'repeat')];
+    return ps;
+  }
+
+  // 一次云雾填充：把 pat 以 tile（世界单位）为一个平铺周期铺满世界矩形 [X0,Y0]-[X1,Y1]，
+  // dx/dy 为世界单位相位偏移。这里的世界坐标已经是分块 ctx 的坐标系（1 单位 = lvl 像素）。
+  function fogRect(ctx, pat, tile, X0, Y0, X1, Y1, alpha, dx, dy, op) {
+    const k = tile / FOG_TEX, w = X1 - X0, h = Y1 - Y0;
+    ctx.save();
+    if (op && op !== 'source-over') ctx.globalCompositeOperation = op;
+    ctx.globalAlpha = alpha;
+    ctx.translate(dx, dy); ctx.scale(k, k);
+    ctx.fillStyle = pat;
+    ctx.fillRect((X0 - dx) / k, (Y0 - dy) / k, w / k, h / k);
+    ctx.restore();
+  }
+
+  // 铺满一层未开放区云雾（调用方已做好 lock / land 裁剪）
+  function fogPaint(ctx, X0, Y0, X1, Y1, night) {
+    const pats = fogPattern(night), A = FOG_LAYER[night ? 'night' : 'day'];
+    // 纹理尺度按分块世界宽度自适应：分块在屏幕上恒为 CHUNK_PX 像素，所以「铺 2 个分块宽 / 0.5 个分块宽」
+    // 等于「云团在屏幕上恒定大小」——放大到街道级不会变成一片纯色，缩到全图也仍是云团而不是噪点。
+    const W = X1 - X0;
+    fogRect(ctx, pats[1], W * 2.00, X0, Y0, X1, Y1, A[1], W * 0.29, W * 0.47, null);        // B：粗大云团（阿尔法高）
+    fogRect(ctx, pats[0], W * 0.50, X0, Y0, X1, Y1, A[0], 0, 0, null);                        // A：细密云絮
+    if (A[2] > 0) fogRect(ctx, pats[0], W * 0.85, X0, Y0, X1, Y1, A[2], W * 0.13, W * 0.71, 'lighter');   // H：翻卷高光（仅夜景）
+  }
+  // 供 headless 截图/数值核对调用（审计脚本用它把云雾画到已知底色上量有效不透明度）；产品代码不要依赖。
+  Renderer._fogPaint = fogPaint;
+
   // ---------------- 地面绘制（世界坐标） ----------------
   // 格内单位坐标 (u,v) → 世界坐标
   Renderer.prototype.quadPt = function (i, j, u, v) {
@@ -793,7 +905,7 @@
       if (lm.x < X0 - R || lm.x > X1 + R || lm.y < Y0 - R || lm.y > Y1 + R) continue;
       this.drawLandmark2D(ctx, lm, lvl);
     }
-    // 未开放区域
+    // 未开放区域：云雾层（纹理双层叠合，见文件上方 fogPaint）
     const lock = new Path2D(); let anyLock = false;
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       const c = j * W + i;
@@ -807,27 +919,9 @@
       // 只覆盖陆地：沿岸的格按真实岸线裁掉水面
       const land = new Path2D(); land.rect(X0 - 1, Y0 - 1, X1 - X0 + 2, Y1 - Y0 + 2); land.addPath(wpth);
       ctx.clip(land, 'evenodd');
-      const night = TH.night;
-      // 雾底：偏蓝灰的半透明雾（比纯白更有对比、能透出地形）
-      ctx.fillStyle = night ? 'rgba(26,36,54,0.60)' : 'rgba(213,223,237,0.55)';
-      ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
-      // 云雾絮：按世界网格锚定的确定性柔和光斑（相邻分块同位置→接缝不可见；烘焙期摊销，非逐帧）
-      const cc = night ? '150,172,205' : '255,255,255', step = 9, baseA = night ? 0.11 : 0.20;
-      const gx0 = Math.floor((X0 - step) / step) * step, gx1 = Math.ceil((X1 + step) / step) * step;
-      const gy0 = Math.floor((Y0 - step) / step) * step, gy1 = Math.ceil((Y1 + step) / step) * step;
-      for (let gy = gy0; gy <= gy1; gy += step) {
-        for (let gx = gx0; gx <= gx1; gx += step) {
-          const h = ((gx * 73856093) ^ (gy * 19349663)) >>> 0;
-          if ((h & 7) === 0) continue;                       // 约 1/8 空位，避免过密
-          const jx = gx + ((h & 255) / 255 - 0.5) * step, jy = gy + (((h >> 8) & 255) / 255 - 0.5) * step;
-          const r = step * (0.8 + ((h >> 16) & 127) / 127 * 1.0);
-          const a = baseA * (0.4 + ((h >> 23) & 63) / 63 * 0.9);
-          const g = ctx.createRadialGradient(jx, jy, 0, jx, jy, r);
-          g.addColorStop(0, 'rgba(' + cc + ',' + a + ')');
-          g.addColorStop(1, 'rgba(' + cc + ',0)');
-          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(jx, jy, r, 0, Math.PI * 2); ctx.fill();
-        }
-      }
+      // 两层不同尺度的无缝噪声云团（大团 + 细絮 + 极淡翻卷高光）；globalAlpha / 合成模式 / 变换都在
+      // fogRect 内部 save/restore 配对，不会泄漏到后面画地标的代码。
+      fogPaint(ctx, X0, Y0, X1, Y1, TH.night);
       ctx.restore();
     }
   };

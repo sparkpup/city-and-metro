@@ -264,6 +264,30 @@
     const def = regions.length - 1;
     this.region = new Uint8Array(N);
     for (let c = 0; c < N; c++) this.region[c] = rr[c] === NONE ? def : rr[c];
+    // 区域缝合（B 方案）：把「已开放区之间的外围窄缝、凹进」并入最近的已开放区，让开放区连片、雾只留在真正外围。
+    // 起因：多边形区划之间常留 2–12 格的 outer 缝，导致开放区看起来像被未开放区包住的孤岛（如同里/木渎、咸阳外围）。
+    // 规则：以开局已开放区为源，只在外围(def)格上做四邻扩散，R 格内被渗透到的外围格归给最近的开放区；
+    //       未开放的具名区域一格不动（那是设计中的分期开放内容）。R=6 ≈ 1.5 km，只吃掉贴边的缝，不会推进到远处。
+    // 副作用（正向）：审计里「已开放区边界外紧贴的建成格」正好落在这一圈，缝合后不再出现「明明建好了却是灰的」。
+    const SEAM_R = 6;
+    {
+      const openK = this.regionOpen, RG = this.region;
+      const dist = new Int16Array(N).fill(-1), srcK = new Int16Array(N).fill(-1);
+      const bq = new Int32Array(N);
+      let bh = 0, bt = 0;
+      for (let c = 0; c < N; c++) { const k = RG[c]; if (openK[k]) { dist[c] = 0; srcK[c] = k; bq[bt++] = c; } }
+      while (bh < bt) {
+        const c = bq[bh++], dd = dist[c];
+        if (dd >= SEAM_R) continue;
+        const i = c % W, j = (c / W) | 0;
+        for (let t = 0; t < 4; t++) {
+          const n = t === 0 ? (i > 0 ? c - 1 : -1) : t === 1 ? (i < W - 1 ? c + 1 : -1) : t === 2 ? (j > 0 ? c - W : -1) : (j < H - 1 ? c + W : -1);
+          if (n < 0 || dist[n] >= 0 || RG[n] !== def) continue;   // 只在外围格里扩，遇具名区即止
+          dist[n] = dd + 1; srcK[n] = srcK[c]; bq[bt++] = n;
+        }
+      }
+      for (let c = 0; c < N; c++) if (dist[c] > 0 && RG[c] === def) RG[c] = srcK[c];
+    }
     // 区域中心（标注与定位用）与范围
     const sx = new Float64Array(regions.length), sy = new Float64Array(regions.length), sn = new Float64Array(regions.length);
     const bb = regions.map(function () { return [1e9, 1e9, -1e9, -1e9]; });
