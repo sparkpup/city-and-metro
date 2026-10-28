@@ -49,7 +49,7 @@
       { id: 'huangpu', name: '黄埔（鱼珠·大沙地）', streets: ['黄埔街道', '鱼珠街道', '红山街道', '文冲街道', '大沙街道', '穗东街道'], district: ['黄埔区'], open: 1990, plan: 'port' },
       { id: 'changzhou', name: '长洲岛', streets: ['长洲街道'], open: 1990, plan: 'res' },
       { id: 'kaifaqu', name: '广州开发区（西区）', streets: ['夏港街道', '云埔街道'], open: 1990, plan: 'ind' },
-      { id: 'tianhe_e', name: '天河东（员村·车陂·东圃）', streets: ['员村街道', '天园街道', '车陂街道', '前进街道', '黄村街道'], district: ['天河区'], open: 1993, plan: 'mix', pop: 3.3e6 },
+      { id: 'tianhe_e', name: '天河东（员村·车陂·东圃）', streets: ['员村街道', '天园街道', '车陂街道', '前进街道', '黄村街道'], district: ['天河区'], open: 1990, plan: 'mix', pop: 3.3e6 },
       { id: 'haizhu_s', name: '海珠中南部', streets: ['瑞宝街道', '南洲街道', '华洲街道'], district: ['海珠区'], open: 1995, plan: 'res', pop: 3.4e6 },
       { id: 'tianhe_n', name: '天河北（沙东·五山·长兴）', streets: ['兴华街道', '沙东街道', '五山街道', '长兴街道'], open: 1995, plan: 'res', pop: 3.4e6 },
       { id: 'baiyun_n', name: '白云北（黄石·永平·嘉禾）', streets: ['黄石街道', '永平街道', '松洲街道', '鹤龙街道', '嘉禾街道'], district: ['白云区'], open: 2000, plan: 'res', pop: 4.0e6 },

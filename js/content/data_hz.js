@@ -23,7 +23,7 @@
     airport: null,
     regions: [
       { id: 'westlake', name: '西湖风景名胜区', scenic: true, open: null, geo: { reserve: '杭州西湖风景名胜区' } },
-      { id: 'xixi', name: '西溪湿地', park: true, open: 2000, plan: 'res', geo: { reserve: '西溪国家湿地公园' }, note: '湿地保护区，保留为绿地' },
+      { id: 'xixi', name: '西溪湿地', park: true, open: 2005, plan: 'res', geo: { reserve: '西溪国家湿地公园' }, note: '湿地保护区，保留为绿地；四周为城西(2005) 包裹，开放年随城西对齐以免成为开局孤块' },
       { id: 'jianqiao', name: '笕桥机场（军用）', poly: jianqiao, open: null, plan: 'res', lockNote: '军用机场，不对外开放' },
       { id: 'qjxc', name: '钱江新城', poly: qjxc, open: 2001, plan: 'cbd', note: '2001 年起建设钱江新城，杭州由「西湖时代」走向「钱塘江时代」（史实）' },
       { id: 'center', name: '湖滨·武林（老城中心）', streets: ['湖滨街道', '清波街道', '小营街道', '天水街道', '武林街道', '长庆街道', '潮鸣街道'], open: 2000, plan: 'cbd' },
@@ -33,7 +33,7 @@
       { id: 'jianggan', name: '江干（采荷·凯旋·四季青）', streets: ['采荷街道', '凯旋街道', '闸弄口街道', '四季青街道'], open: 2000, plan: 'res' },
       { id: 'wenjiao', name: '西湖区（文教区·黄龙）', streets: ['北山街道', '西溪街道', '翠苑街道', '文新街道', '古荡街道', '西湖街道', '灵隐街道'], open: 2000, plan: 'campus' },
       { id: 'binjiang', name: '滨江（高新区）', district: ['滨江区'], open: 2000, plan: 'mix', note: '1996 年设立滨江区，发展高新技术产业（史实）' },
-      { id: 'xiasha', name: '下沙（开发区·高教园区）', district: ['钱塘区'], open: 2000, plan: 'ind', note: '下沙经济技术开发区与高教园区（史实）' },
+      { id: 'xiasha', name: '下沙（开发区·高教园区）', district: ['钱塘区'], open: 2001, plan: 'ind', note: '下沙经济技术开发区与高教园区（史实）' },
       { id: 'xiaoshan', name: '萧山', district: ['萧山区'], open: 2001, plan: 'resind', note: '2001 年 3 月萧山撤市设区（史实）' },
       { id: 'chengdong', name: '城东（彭埠·笕桥·丁兰·九堡）', streets: ['彭埠街道', '笕桥街道', '丁兰街道', '九堡街道'], open: 2004, plan: 'res', pop: 3.4e6, note: '城东新城与杭州东站枢纽开发（史实）' },
       { id: 'xihuwest', name: '城西（蒋村·留下·三墩·转塘）', streets: ['蒋村街道', '留下街道', '三墩镇', '转塘街道', '双浦镇'], open: 2005, plan: 'res', pop: 3.6e6 },

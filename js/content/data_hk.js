@@ -32,7 +32,10 @@
     airport: { name: '启德机场', closeYear: 1998, runway: [ll(22.3292, 114.1990), ll(22.3062, 114.2230)] },
     // 区域：郊野山地（按林地覆盖）→ 启德机场 → 各区（OSM 区界）→ 外围
     regions: [
-      { id: 'hills', name: '郊野公园（山地）', scenic: true, open: null, woodMin: 0.5 },
+      // scenic 区的格子恒为 LU.HILL（city.js:68）且禁止设站（metro.js:440），故 open 年只影响「连通判定」。
+      // 若写 open:null，则大帽山/城门/大潭等郊野公园会把荃湾北（88 格）、石澳（42 格）切成开局孤岛；
+      // 山地本身不可建设，放开连通年不会产生任何假城市化，故取 1970。
+      { id: 'hills', name: '郊野公园（山地）', scenic: true, open: 1970, woodMin: 0.5 },
       { id: 'airport', name: '启德机场（启德发展区）', poly: kaiTak, open: 1999, plan: 'mix', note: '1998 年 7 月新机场启用，启德机场关闭（史实）' },
       { id: 'central', name: '中西区（中环·上环·西环）', district: ['中西区'], open: 1970, plan: 'cbd' },
       { id: 'wanchai', name: '湾仔区（湾仔·铜锣湾）', district: ['湾仔区'], open: 1970, plan: 'oldmix' },
@@ -44,7 +47,7 @@
       { id: 'wts', name: '黄大仙区（黄大仙·钻石山）', district: ['黄大仙区'], open: 1970, plan: 'res' },
       { id: 'kt', name: '观塘区（观塘·九龙湾·蓝田）', district: ['观塘区'], open: 1970, plan: 'resind' },
       { id: 'tw', name: '荃湾新市镇', district: ['荃湾区'], open: 1970, plan: 'resind', note: '荃湾为香港第一个新市镇（1961 年起发展，史实）' },
-      { id: 'kwt', name: '葵青（葵涌·青衣）', district: ['葵青区'], open: 1972, plan: 'port', pop: 3.7e6, note: '1972 年葵涌货柜码头启用（史实）' },
+      { id: 'kwt', name: '葵青（葵涌·青衣）', district: ['葵青区'], open: 1970, plan: 'port', pop: 3.7e6, note: '1972 年葵涌货柜码头启用（史实）' },
       { id: 'st', name: '沙田新市镇', district: ['沙田区'], open: 1973, plan: 'res', pop: 3.8e6, note: '1973 年起按新市镇计划发展（史实）' },
       { id: 'tko', name: '将军澳新市镇', district: ['西贡区'], open: 1982, plan: 'res', pop: 4.4e6, note: '1982 年起规划发展，主体建于填海土地（史实）' },
     ],
