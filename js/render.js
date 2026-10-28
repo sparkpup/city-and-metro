@@ -804,14 +804,13 @@
     if (anyLock) {
       ctx.save();
       ctx.clip(lock);
-      // 只覆盖陆地：沿岸的格按真实岸线裁掉水面，避免锯齿状的斜线压在江面上
+      // 只覆盖陆地：沿岸的格按真实岸线裁掉水面
       const land = new Path2D(); land.rect(X0 - 1, Y0 - 1, X1 - X0 + 2, Y1 - Y0 + 2); land.addPath(wpth);
       ctx.clip(land, 'evenodd');
-      ctx.fillStyle = TH.lockFill; ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
-      ctx.strokeStyle = TH.lockHatch; ctx.lineWidth = Math.max(px, 0.04);
-      ctx.beginPath();
-      for (let k = Math.floor((X0 + Y0) / 0.6) * 0.6; k < X1 + Y1; k += 0.6) { ctx.moveTo(k - Y0, Y0); ctx.lineTo(k - Y1, Y1); }
-      ctx.stroke();
+      // 未开放区 = 迷雾覆盖（柔和半透明雾色；去掉旧的灰罩+斜线网纹，改为平雾）
+      const F = TH.fog, fa = TH.night ? 0.60 : 0.72;
+      ctx.fillStyle = 'rgba(' + F[0] + ',' + F[1] + ',' + F[2] + ',' + fa + ')';
+      ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
       ctx.restore();
     }
   };
