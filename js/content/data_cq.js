@@ -94,6 +94,8 @@
       at(29.5050, 106.4350, { id: 'cq_xizhan', name: '重庆西站', w: 500, d: 300, year: 2018, kind: 'rail' }),
       at(29.5600, 106.5500, { id: 'cq_dlt', name: '人民大礼堂', w: 200, d: 200, year: 1954, kind: 'hall' }),
       at(29.5580, 106.5480, { id: 'cq_sx', name: '三峡博物馆', w: 200, d: 200, year: 2005, kind: 'gallery' }),
+      at(29.5265, 106.4990, { id: 'cq_olympic', name: '重庆奥体中心', w: 300, d: 240, year: 2004, kind: 'stadium' }),
+      at(29.7188, 106.5425, { id: 'cq_expo', name: '重庆国际博览中心', w: 320, d: 220, year: 2013, kind: 'hall' }),
     ],
     facilities: [
       { id: 'cq_f_beizhan', n: '重庆北站', t: 'rail', lm: 'cq_beizhan', pax: [[2006, 6], [2015, 9], [2020, 10], [2030, 9]] },
@@ -108,6 +110,16 @@
       { id: 'cq_f_ciqikou', n: '磁器口古镇', t: 'scenic', lm: 'cq_ciqikou', w: 0.02 },
       { id: 'cq_f_ctm', n: '朝天门来福士', t: 'cbd', lm: 'cq_ctm', w: [[2004, 0.006], [2019, 0.03], [2030, 0.04]] },
       { id: 'cq_f_huaxi', n: '华西医院重庆医院', t: 'hosp', at: ll(29.5600, 106.5200), w: 0.04 },
+      // —— 公园 / 体育 / 会展 / 医院 / 景点（2026-10-28 补，坐标均经 probe-cell 验 landFrac=1.00）——
+      { id: 'cq_f_nanshan', n: '南山植物园', t: 'park', at: ll(29.5450, 106.6100), w: 0.008 },   // 南岸南山，landFrac 1.00
+      { id: 'cq_f_centralpark', n: '渝北中央公园', t: 'park', at: ll(29.7285, 106.5800), w: 0.008 },   // 10 号线中央公园站旁，landFrac 1.00
+      { id: 'cq_f_eling', n: '鹅岭公园', t: 'park', at: ll(29.5523, 106.5330), w: 0.007 },   // 渝中半岛脊线，landFrac 1.00
+      { id: 'cq_f_olympic', n: '重庆奥体中心', t: 'stadium', lm: 'cq_olympic', w: 0.01 },   // 袁家岗，环线奥体中心站
+      { id: 'cq_f_expo', n: '重庆国际博览中心', t: 'venue', lm: 'cq_expo', w: 0.012 },   // 悦来，国博支线国博中心站
+      { id: 'cq_f_cyfy', n: '重医附一院', t: 'hosp', at: ll(29.5332, 106.5085), w: 0.03 },   // 袁家岗，landFrac 1.00
+      { id: 'cq_f_xinan', n: '西南医院', t: 'hosp', at: ll(29.5415, 106.4470), w: 0.025 },   // 沙坪坝高滩岩，landFrac 1.00
+      { id: 'cq_f_dlt', n: '人民大礼堂', t: 'scenic', lm: 'cq_dlt', w: 0.02 },   // 学田湾
+      { id: 'cq_f_sxm', n: '三峡博物馆', t: 'scenic', lm: 'cq_sx', w: 0.02 },   // 人民广场
     ],
     histTasks: [
       { id: 'cq1', appear: [2004, 11], deadline: [2008, 12], type: 'connect', reward: 30000,
