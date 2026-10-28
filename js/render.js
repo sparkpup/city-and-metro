@@ -807,10 +807,27 @@
       // 只覆盖陆地：沿岸的格按真实岸线裁掉水面
       const land = new Path2D(); land.rect(X0 - 1, Y0 - 1, X1 - X0 + 2, Y1 - Y0 + 2); land.addPath(wpth);
       ctx.clip(land, 'evenodd');
-      // 未开放区 = 迷雾覆盖（柔和半透明雾色；去掉旧的灰罩+斜线网纹，改为平雾）
-      const F = TH.fog, fa = TH.night ? 0.60 : 0.72;
-      ctx.fillStyle = 'rgba(' + F[0] + ',' + F[1] + ',' + F[2] + ',' + fa + ')';
+      const night = TH.night;
+      // 雾底：偏蓝灰的半透明雾（比纯白更有对比、能透出地形）
+      ctx.fillStyle = night ? 'rgba(26,36,54,0.60)' : 'rgba(213,223,237,0.55)';
       ctx.fillRect(X0, Y0, X1 - X0, Y1 - Y0);
+      // 云雾絮：按世界网格锚定的确定性柔和光斑（相邻分块同位置→接缝不可见；烘焙期摊销，非逐帧）
+      const cc = night ? '150,172,205' : '255,255,255', step = 9, baseA = night ? 0.11 : 0.20;
+      const gx0 = Math.floor((X0 - step) / step) * step, gx1 = Math.ceil((X1 + step) / step) * step;
+      const gy0 = Math.floor((Y0 - step) / step) * step, gy1 = Math.ceil((Y1 + step) / step) * step;
+      for (let gy = gy0; gy <= gy1; gy += step) {
+        for (let gx = gx0; gx <= gx1; gx += step) {
+          const h = ((gx * 73856093) ^ (gy * 19349663)) >>> 0;
+          if ((h & 7) === 0) continue;                       // 约 1/8 空位，避免过密
+          const jx = gx + ((h & 255) / 255 - 0.5) * step, jy = gy + (((h >> 8) & 255) / 255 - 0.5) * step;
+          const r = step * (0.8 + ((h >> 16) & 127) / 127 * 1.0);
+          const a = baseA * (0.4 + ((h >> 23) & 63) / 63 * 0.9);
+          const g = ctx.createRadialGradient(jx, jy, 0, jx, jy, r);
+          g.addColorStop(0, 'rgba(' + cc + ',' + a + ')');
+          g.addColorStop(1, 'rgba(' + cc + ',0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(jx, jy, r, 0, Math.PI * 2); ctx.fill();
+        }
+      }
       ctx.restore();
     }
   };
