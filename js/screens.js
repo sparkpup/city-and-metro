@@ -163,12 +163,20 @@
     // ---- 右侧：详情 ----
     const detail = h('div', { class: 'msel-detail' });
     const fmtDate = function (sl) { return sl.date[0] + '年' + sl.date[1] + '月'; };
+    const chosenStart = {};   // 每张图记住玩家选的「开局年代」（仅多时代图有）
     const buildDetail = function () {
-      const mp = CM.MAPS[sel], games = CM.Save.list(sel), latest = CM.Save.latest(sel), y0 = mp.cfg.START.y;
+      const mp = CM.MAPS[sel], games = CM.Save.list(sel), latest = CM.Save.latest(sel), baseY = mp.cfg.START.y;
+      // 开局年代：只列 live 项（planned 是预留，不显示）；默认走 defaultStart，其次第一项。
+      // 之前 start() 不传 startId，导致「接管一号线」年代形同虚设——玩家永远只能从零开始。
+      const liveStarts = (mp.starts || []).filter(function (s) { return s.status !== 'planned'; });
+      const curStart = liveStarts.filter(function (s) { return s.id === chosenStart[sel]; })[0]
+        || liveStarts.filter(function (s) { return s.id === mp.defaultStart; })[0]
+        || liveStarts[0] || null;
+      const y0 = curStart && curStart.START ? curStart.START.y : baseY;
       const start = function (mode) {
         snd('build');
         if (mp.tutorial) CM.newGame({ map: sel, mode: 'free', tutorial: true, name: '新手教程 · ' + mp.data.city });
-        else CM.newGame({ map: sel, mode: mode, name: (mode === 'free' ? '自由建造' : '经营挑战') + ' · ' + mp.data.city + ' ' + y0 });
+        else CM.newGame({ map: sel, mode: mode, startId: curStart ? curStart.id : undefined, name: (mode === 'free' ? '自由建造' : '经营挑战') + ' · ' + mp.data.city + ' ' + y0 });
       };
       const modeBtn = function (mode, icon, badge, title, desc, primary) {
         return h('button', { class: 'map-mode' + (primary ? ' primary' : ''), onclick: function () { start(mode); } },
@@ -195,6 +203,21 @@
         return h('div', { class: 'msel-ev' + (k === 0 ? ' start' : '') }, h('b', null, String(e[0])), h('i'), h('span', null, e[1]));
       }));
       const acts = h('div', { class: 'map-actions' });
+      // 开局年代选择（仅多时代图）：让玩家在「接管既有线 / 从零开始 / 2010 世博年」之间选。
+      // 选中后写进 chosenStart，start() 把它作为 startId 传给 CM.newGame（main.js 会 resolveStart）。
+      if (liveStarts.length > 1) {
+        acts.appendChild(h('div', { style: { margin: '2px 0 10px' } },
+          h('div', { style: { fontSize: '12px', opacity: '0.7', marginBottom: '6px' } }, '开局年代'),
+          h('div', { style: { display: 'flex', flexWrap: 'wrap', gap: '6px' } }, liveStarts.map(function (s) {
+            const on = s === curStart;
+            return h('button', { type: 'button', title: s.sub || '', onclick: function () { chosenStart[sel] = s.id; drawDetail(); },
+              style: { padding: '6px 10px', borderRadius: '8px', cursor: 'pointer', textAlign: 'left', lineHeight: '1.3',
+                border: '1px solid ' + (on ? 'currentColor' : 'rgba(128,128,128,.35)'),
+                background: on ? 'rgba(128,128,128,.15)' : 'transparent', color: 'inherit', font: 'inherit',
+                fontWeight: on ? '600' : '400' } },
+              h('span', null, s.label), s.sub ? h('span', { style: { display: 'block', fontSize: '11px', opacity: '0.65' } }, s.sub) : null);
+          }))));
+      }
       if (mp.tutorial) acts.appendChild(modeBtn('free', 'play', 'b-teal', '开始教程', '从头开始 12 个引导任务（不限资金）', true));
       else {
         acts.appendChild(modeBtn('challenge', 'trophy', 'b-gold', '经营挑战', '新游戏 · 初始资金 ' + U.fmtMoney(mp.cfg.economy.startFunds, undefined, mp.cfg.money) + '，拨款随城市经济变化', true));
