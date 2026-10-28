@@ -110,7 +110,7 @@
       { id: 'cq_f_ciqikou', n: '磁器口古镇', t: 'scenic', lm: 'cq_ciqikou', w: 0.02 },
       { id: 'cq_f_ctm', n: '朝天门来福士', t: 'cbd', lm: 'cq_ctm', w: [[2004, 0.006], [2019, 0.03], [2030, 0.04]] },
       { id: 'cq_f_huaxi', n: '华西医院重庆医院', t: 'hosp', at: ll(29.5600, 106.5200), w: 0.04 },
-      // —— 公园 / 体育 / 会展 / 医院 / 景点（2026-10-28 补，坐标均经 probe-cell 验 landFrac=1.00）——
+      // —— 公园 / 体育 / 会展 / 医院 / 景点（2026-10 补，坐标均经 probe-cell 验 landFrac=1.00）——
       { id: 'cq_f_nanshan', n: '南山植物园', t: 'park', at: ll(29.5450, 106.6100), w: 0.008 },   // 南岸南山，landFrac 1.00
       { id: 'cq_f_centralpark', n: '渝北中央公园', t: 'park', at: ll(29.7285, 106.5800), w: 0.008 },   // 10 号线中央公园站旁，landFrac 1.00
       { id: 'cq_f_eling', n: '鹅岭公园', t: 'park', at: ll(29.5523, 106.5330), w: 0.007 },   // 渝中半岛脊线，landFrac 1.00
