@@ -96,6 +96,9 @@
       at(29.5580, 106.5480, { id: 'cq_sx', name: '三峡博物馆', w: 200, d: 200, year: 2005, kind: 'gallery' }),
       at(29.5265, 106.4990, { id: 'cq_olympic', name: '重庆奥体中心', w: 300, d: 240, year: 2004, kind: 'stadium' }),
       at(29.7188, 106.5425, { id: 'cq_expo', name: '重庆国际博览中心', w: 320, d: 220, year: 2013, kind: 'hall' }),
+      // —— 2026-10-29 补高校地标（campus：不阻止设站；建城期仅对该格人口减半，不影响周边客流）——
+      at(29.8245, 106.4230, { id: 'cq_swu', name: '西南大学', w: 600, d: 450, year: 2005, kind: 'campus' }),
+      at(29.5320, 106.5950, { id: 'cq_cqupt', name: '重庆邮电大学', w: 360, d: 280, year: 1950, kind: 'campus' }),
     ],
     facilities: [
       { id: 'cq_f_beizhan', n: '重庆北站', t: 'rail', lm: 'cq_beizhan', pax: [[2006, 6], [2015, 9], [2020, 10], [2030, 9]] },
@@ -120,6 +123,15 @@
       { id: 'cq_f_xinan', n: '西南医院', t: 'hosp', at: ll(29.5415, 106.4470), w: 0.025 },   // 沙坪坝高滩岩，landFrac 1.00
       { id: 'cq_f_dlt', n: '人民大礼堂', t: 'scenic', lm: 'cq_dlt', w: 0.02 },   // 学田湾
       { id: 'cq_f_sxm', n: '三峡博物馆', t: 'scenic', lm: 'cq_sx', w: 0.02 },   // 人民广场
+      // —— 2026-10-29 补大学 / 大型商场（坐标均经 probe-cell 验 landFrac，并按所在格 pop 择高客流位）——
+      // 西南大学：北碚天生路，landFrac 0.94、pop 3478（6 号线北碚方向主力客流）
+      { id: 'cq_f_swu', n: '西南大学', t: 'uni', at: ll(29.8245, 106.4230), w: 0.025 },
+      // 重庆邮电大学：南岸南山崇文路，landFrac 1.00、pop 6739（本批最高客流位）
+      { id: 'cq_f_cqupt', n: '重庆邮电大学', t: 'uni', at: ll(29.5320, 106.5950), w: 0.018 },
+      // 重庆万象城：九龙坡谢家湾，landFrac 1.00、pop 779
+      { id: 'cq_f_mixc', n: '重庆万象城', t: 'shop', at: ll(29.5280, 106.5090), w: 0.025 },
+      // 龙湖时代天街：大坪，landFrac 1.00、pop 598（1/2 号线换乘枢纽旁）
+      { id: 'cq_f_dp', n: '龙湖时代天街（大坪）', t: 'shop', at: ll(29.5362, 106.5215), w: 0.022 },
     ],
     histTasks: [
       { id: 'cq1', appear: [2004, 11], deadline: [2008, 12], type: 'connect', reward: 30000,
