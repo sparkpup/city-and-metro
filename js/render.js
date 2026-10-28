@@ -1779,8 +1779,8 @@
         if (k >= 0 && w <= CFG.walk.maxAccessM) { col = stCol(k); a = 0.42 - 0.18 * U.clamp(w / CFG.walk.maxAccessM, 0, 1); }
         else if (p > 4000) { col = [215, 48, 39]; a = U.clamp(0.1 + p / 120000, 0, 0.38); }
       } else if (lay === 'pop') {
-        // 对数刻度（log p 在阈值 200 与本图峰值间归一化）+ 5 段高对比渐变：中等密度不再被洗白，人口集中区清晰可辨
-        if (p > 200) { const t = U.clamp((Math.log(p) - Math.log(200)) / (Math.log(popRef) - Math.log(200)), 0, 1); col = U.ramp([[0, [255, 238, 184]], [0.22, [255, 206, 110]], [0.45, [247, 150, 58]], [0.7, [231, 92, 50]], [1, [170, 22, 33]]], t); a = 0.14 + 0.42 * t; }
+        // 对数刻度（log p 在阈值 200 与本图峰值间归一化）+ 6 段加长高对比渐变、最密档更深绯红：中心峰值显影、中等密度不再洗白
+        if (p > 200) { const t = U.clamp((Math.log(p) - Math.log(200)) / (Math.log(popRef) - Math.log(200)), 0, 1); col = U.ramp([[0, [255, 241, 198]], [0.16, [255, 214, 120]], [0.36, [252, 170, 66]], [0.56, [240, 118, 48]], [0.78, [210, 58, 44]], [1, [130, 16, 30]]], t); a = 0.14 + 0.44 * t; }
       } else if (this.layer === 'jobs') {
         const t = p + jb;
         if (t > 300) { const sh = p / t; col = U.mixc([52, 104, 214], [240, 150, 60], sh); a = U.clamp(0.12 + 0.4 * Math.sqrt(t / 90000), 0, 0.5); }
