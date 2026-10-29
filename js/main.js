@@ -126,6 +126,7 @@
   }
   // opts.map：地图（默认广州）；opts.tutorial：新手教程
   CM.newGame = function (opts) {
+    unloadCurrentMap();   // 都市圈切城：先卸载旧城（释放 + 复位 + 保留建设），再生成新城
     if (CM.Soundscape) CM.Soundscape.reset();
     const mp = CM.MAPS[opts.map] || CM.MAPS.gz;
     // 年代：先解析（不切图）拿到真实开局年，避免加载提示报该图基准年而实际开在别的年代
@@ -136,6 +137,7 @@
     }, 60);
   };
   CM.loadGame = function (data) {
+    unloadCurrentMap();   // 同上：载入另一座城市的存档前，先卸载当前地图实例
     if (CM.Soundscape) CM.Soundscape.reset();
     ui.showLoading('正在载入存档并恢复城市与交通状态…');
     setTimeout(function () {
@@ -170,6 +172,39 @@
     R.cam.t = 1; R.cam.under = R.cam.tu = 0; R.cam.fly = null; R.cam.anchor = null;
     previewCamera(0);
   };
+
+  // ---- 都市圈切城：卸载当前地图实例（释放内存 + 复位视图状态 + 保留建设）----
+  // 问题：newGame/loadGame 原先直接 useMap + Game.create 覆盖 CM.game，旧城的视图状态
+  //   （工具/分析图层/选中/面板/特效/agents）不会清理 → 切城后残留旧城状态；且未触发保存，
+  //   玩家在上一座城市已修建的部分可能丢失（"前面城市修建部分的保留"）。
+  // 做法：抽出与 endGame 一致的清理，但**不**切回开始界面预览背景（紧接着就要载入新城），
+  //   也不改 CM.mapId —— 切图由随后的 CM.useMap 负责。
+  // 只在确实存在当前对局时执行；首次进入（CM.game 为 null）直接跳过，行为不变。
+  function unloadCurrentMap() {
+    if (!CM.game) return;
+    // 1) 保留建设：切城前把当前城市进度落盘（存档系统自行判断是否真有改动、是否可写）
+    try { if (ui.doAutosave) ui.doAutosave(); } catch (e) { console.error(e); }
+    // 2) 停跟随/教程，关浮层与弹窗
+    ui.clearCelebrations();
+    ui.closeSearch();
+    if (CM.NetMap) CM.NetMap.close();
+    if (CM.Stats && CM.Stats.isOpen()) CM.Stats.close();
+    ui.closePanel(true);
+    ui.setTooltip(null);
+    if (CM.Follow) CM.Follow.stop(true);
+    if (CM.Tutorial) CM.Tutorial.detach();
+    // 3) 释放对局实例与其持有的求解/路网缓存（断开引用交给 GC）
+    CM.game = null;
+    CM.agents.reset();
+    if (CM.Metro && CM.Metro.clearCaches) CM.Metro.clearCaches();
+    // 4) 复位视图状态：分析图层、选中与高亮、建设工具、特效、相机飞行锚点
+    ui.layer = 'none'; R.layer = 'none'; R.heatKey = ''; R.layerFade = 0;
+    ui.selection = null; ui.highlightLine = null; ui.multi = null;
+    tools.tool = 'select'; tools.chain = null; tools.bends = []; tools.drag = null; tools.ptr = null; tools.hover = null; tools.keys.clear();
+    R.fx = [];
+    R.cam.fly = null; R.cam.anchor = null;
+    R.cv.style.cursor = '';
+  }
 
   // FPS 显示（按 F3 开关）：游戏已算 R.stats.fps，这里把它显示出来便于性能排查
   let fpsEl = null;

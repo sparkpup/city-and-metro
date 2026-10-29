@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 'use strict';
 // OSM Overpass 分块抓取器（city-and-metro 地理管线）
-//   用法：node scripts/fetch-geo.mjs --city sz|xa|sh|cq [--status] [--plan] [--force] [--retry-failed] [--verify] [--ttl N] [--api <url>] [--timeout <sec>]
+//   用法：node scripts/fetch-geo.mjs --city sz|xa|sh|cq|wx [--status] [--plan] [--force] [--retry-failed] [--verify] [--ttl N] [--api <url>] [--timeout <sec>]
 //      --status        只读索引，显示成功/失败/累计体积与上次运行统计（不发请求）
 //      --plan          干跑：只算出「哪些会复用、哪些要新抓、哪些已失效」，不发请求
 //      --retry-failed  只重跑上次失败的项（其余跳过，不请求）
@@ -58,6 +58,23 @@ const CITIES = {
   // 覆盖：大学城(106.305)、重庆东站(茶园 106.64)、北碚(29.83)、鱼洞(29.38)、江北机场(29.719)、全部现有地铁区。
   // 2026-10-27 二次扩围：西界 106.27→106.20 纳璧山，南界 29.36→29.25 纳江津(江跳线)。194×277=53738 格。
   cq: { bbox: [29.2500, 106.2000, 29.8700, 106.7000], W: 194, H: 277 },
+  // 无锡（2026-10-30 启动，长三角都市圈第 3 城；同日二改：裁剪去宜兴）
+  // bbox [S,W,N,E] = [31.40, 119.85, 31.93, 120.62]；73.0 × 59.0 km；W=294 × H=237 = 69678 格；
+  // 每格 248 × 249 m（freeze-bbox --city wx 验算通过，17 地标全对，宜兴已正确落到界外）。
+  // 覆盖：梁溪/滨湖/新吴/锡山/惠山 + 江阴(北) + 太湖无锡段 + 马山（灵山）+ 硕放机场。**宜兴不在图内**。
+  // 二改（体积优化，重要）：
+  //   原 bbox [31.00,119.60,31.93,120.62]（389×416=161824 格）含宜兴(西南)+江阴(北)两远郊，
+  //   外接矩形 96.9×103.5 km、skim≈415MB，反而比苏州(121512 格/233MB)大 78% —— 根源是
+  //   **外接矩形效率低**（矩形内大片太湖/长江/常州 territory，有效内容占比低），不是冗余资源。
+  //   现裁剪南界 31.00→31.40、西界 119.60→119.85 → 69678 格、skim≈79MB（相对旧 bbox 降 81%）。
+  //   ⚠ origin(西南角)已变 → 旧 raw/wx 缓存全部失效，已清空重抓。后续扩围不要再动南/西界。
+  // 与苏州的衔接（都市圈预留，关键）：
+  //   - lat0=31.93 与苏州完全一致；kx/ky=381.82/447.17 与苏州 381.32/447.71 差 0.13%/0.12%
+  //     → 两图网格实质对齐，合并时经度方向只差常数平移 x_wx = x_sz + Δ，Δ=(120.415-119.85)*381.82≈216 格。
+  //   - 东界 120.62 = 锡山东界（无锡真域东界），与苏州西界 120.415 天然重叠 ~20 km 作衔接带；
+  //     该重叠由地理决定（锡山与苏州相城/常熟接壤），encode 按 OSM 元素 id 去重，不会重复计费。
+  //   - 西北角仍含常州城区东缘（矩形外接代价），单城模式作边缘/未开放区。
+  wx: { bbox: [31.4000, 119.8500, 31.9300, 120.6200], W: 294, H: 237 },
 };
 const BLKX = 0.060, BLY = 0.050, STPX = 0.055, STPY = 0.045, MINX = 0.020, MINY = 0.018;
 
@@ -70,7 +87,7 @@ const STATUS = process.argv.includes('--status');
 const sleep = (s) => new Promise((r) => setTimeout(r, s * 1000));
 const log = (m) => { console.log(`[${new Date().toISOString().slice(11, 19)}] ${m}`); };
 
-if (!CITIES[city]) { console.error('用法: --city sz|xa|sh|cq [--status] [--plan] [--force] [--retry-failed] [--verify] [--ttl N]'); process.exit(2); }
+if (!CITIES[city]) { console.error('用法: --city sz|xa|sh|cq|wx [--status] [--plan] [--force] [--retry-failed] [--verify] [--ttl N]'); process.exit(2); }
 const RAW = path.join(WS, 'data', 'raw', city);
 fs.mkdirSync(RAW, { recursive: true });
 
