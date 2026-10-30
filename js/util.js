@@ -308,6 +308,23 @@ window.CM = window.CM || {};
   Emitter.prototype.on = function (ev, fn) { (this._h[ev] = this._h[ev] || []).push(fn); return fn; };
   Emitter.prototype.off = function (ev, fn) { const a = this._h[ev]; if (a) { const i = a.indexOf(fn); if (i >= 0) a.splice(i, 1); } };
   Emitter.prototype.emit = function (ev, data) { const a = this._h[ev]; if (a) for (const f of a.slice()) f(data); };
+
+  // 樱桃②（上游 v2.2.0 同步）：GCJ-02（火星坐标）→ WGS-84。
+  // 作者的中国内地地图数据按 GCJ-02 填写经纬度，投影前需换算为 OSM 使用的 WGS-84（偏移约数百米）。
+  // 采用作者的 data_sh.js 时，其 ll() 依赖 U.gcj2wgs，故先补齐此函数。
+  // 注意：我们自建城市（sz/xa/cq/wx/sh 扩界新增区）的坐标取自 OSM、本就是 WGS-84，
+  //      不要过本函数，应走 llW() 直投，否则会被火星坐标偏移带偏。
+  U.gcj2wgs = (function () {
+    const A = 6378245.0, EE = 0.00669342162296594323, PI = Math.PI;
+    const tLat = function (x, y) { let r = -100 + 2 * x + 3 * y + 0.2 * y * y + 0.1 * x * y + 0.2 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * PI) + 20 * Math.sin(2 * x * PI)) * 2 / 3; r += (20 * Math.sin(y * PI) + 40 * Math.sin(y / 3 * PI)) * 2 / 3; r += (160 * Math.sin(y / 12 * PI) + 320 * Math.sin(y * PI / 30)) * 2 / 3; return r; };
+    const tLon = function (x, y) { let r = 300 + x + 2 * y + 0.1 * x * x + 0.1 * x * y + 0.1 * Math.sqrt(Math.abs(x)); r += (20 * Math.sin(6 * x * PI) + 20 * Math.sin(2 * x * PI)) * 2 / 3; r += (20 * Math.sin(x * PI) + 40 * Math.sin(x / 3 * PI)) * 2 / 3; r += (150 * Math.sin(x / 12 * PI) + 300 * Math.sin(x / 30 * PI)) * 2 / 3; return r; };
+    return function (lat, lon) {
+      const rad = lat / 180 * PI, s = Math.sin(rad), m = 1 - EE * s * s, sm = Math.sqrt(m);
+      const dLat = tLat(lon - 105, lat - 35) * 180 / ((A * (1 - EE)) / (m * sm) * PI), dLon = tLon(lon - 105, lat - 35) * 180 / (A / sm * Math.cos(rad) * PI);
+      return [lat - dLat, lon - dLon];
+    };
+  })();
+
   U.Emitter = Emitter;
 
   CM.U = U;
