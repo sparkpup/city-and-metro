@@ -45,9 +45,14 @@ const CITIES = {
   // 重庆（2026-10-27 大图）：168×232=38976 格，每格≈248/245 m。与 fetch-geo.mjs 逐位一致。
   // 2026-10-27 二次扩围：纳璧山(106.20)/江津(29.25)，194×277=53738 格。与 fetch-geo 逐位一致。
   cq: { id: 'cq', W: 194, H: 277, proj: { lon0: 106.200, lat0: 29.870, kx: 388.00, ky: 446.77 }, bbox: [29.250, 106.200, 29.870, 106.700] },
+  // 无锡（2026-10-30 冻结，长三角都市圈第 3 城）：bbox [S,W,N,E] = [31.40,119.85,31.93,120.62]。
+  // 二改裁剪去宜兴：由初版 389×416=161824 格(skim~415MB) 裁为 294×237=69678 格(skim~79MB)，降约 81%。
+  // 每格≈248×249 m。lat0=31.93 与苏州 lat0 一致、kx/ky 与苏州差 <0.1% → 苏锡网格近似对齐，跨城只需平移。
+  // 与 fetch-geo.mjs、tests/headless/freeze-bbox.mjs 三处必须逐位一致。
+  wx: { id: 'wx', W: 294, H: 237, proj: { lon0: 119.850, lat0: 31.930, kx: 381.82, ky: 447.17 }, bbox: [31.4000, 119.8500, 31.9300, 120.6200] },
 };
 const city = CITIES[cityKey];
-if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa|sh|cq [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
+if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa|sh|cq|wx [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
 const rawDir = path.resolve(arg('raw', path.join(WORKSPACE, 'data', 'raw', city.id)));
 const outFile = path.resolve(REPO, arg('out', 'js/content/geo_' + city.id + '.js'));
 const reportFile = arg('report', '') ? path.resolve(REPO, arg('report', '')) : '';
