@@ -62,10 +62,11 @@
   // 字段：id 唯一键 / name 组标题 / sub 副标题 / ids 成员城市 id（一城单归属，先到先得）
   //      / expanded 默认展开 / sort 组间升序（小的在上）/ status 筹备状态 / force 强制可见
   const MODES = [
-    // 可见规则要求「ids 里真实存在的城市 ≥ 2」，上海落地后这里从 ['sz'] 补成 ['sz','sh']，
+    // 可见规则要求「ids 里真实存在的城市 ≥ 2」：上海落地后从 ['sz'] 补成 ['sz','sh']，
     // 「长三角都市圈」组才真正出现在选图页（此前只有一个成员，整组被隐藏）。
+    // 2026-10-31 无锡落地：补入 'wx' → 组内 苏州 · 上海 · 无锡 三城（常州待建）。
     { id: 'east', name: '长三角都市圈', sub: '苏州 · 上海 · 无锡 · 常州',
-      ids: ['sz', 'sh'], status: 'live', sort: 10, expanded: true },
+      ids: ['sz', 'sh', 'wx'], status: 'live', sort: 10, expanded: true },
     { id: 'chengyu', name: '成渝都市圈', sub: '重庆 · 成都',
       ids: [], status: 'planned', sort: 20, expanded: false },
     { id: 'classic', name: '经典地图', sub: '单城经营 · 组内由易到难',
