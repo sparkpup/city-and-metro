@@ -50,6 +50,9 @@ const CITIES = {
   // 每格≈248×249 m。lat0=31.93 与苏州 lat0 一致、kx/ky 与苏州差 <0.1% → 苏锡网格近似对齐，跨城只需平移。
   // 与 fetch-geo.mjs、tests/headless/freeze-bbox.mjs 三处必须逐位一致。
   wx: { id: 'wx', W: 294, H: 237, proj: { lon0: 119.850, lat0: 31.930, kx: 381.82, ky: 447.17 }, bbox: [31.4000, 119.8500, 31.9300, 120.6200] },
+  // 常州（2026-11-01 启动，长三角第 4 城）：bbox [31.55,119.60,31.93,120.10] 192×176，lat0 31.93 对齐苏/锡。
+  // 与 fetch-geo.mjs 的 cz 逐位一致（bbox/W/H）。kx=384 / ky=463.16（每格≈250 m）。
+  cz: { id: 'cz', W: 192, H: 176, proj: { lon0: 119.600, lat0: 31.930, kx: 384.00, ky: 463.16 }, bbox: [31.5500, 119.6000, 31.9300, 120.1000] },
 };
 const city = CITIES[cityKey];
 if (!cityKey || !city) { console.error('用法: node scripts/encode-geo.mjs --city sz|xa|sh|cq|wx [--raw dir] [--out file] [--report file] [--simplify 0.08]'); process.exit(2); }
