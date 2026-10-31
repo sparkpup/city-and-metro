@@ -28,7 +28,8 @@
       features: [['bridge', '珠江越江', '珠江把城市分成两岸，越江段可以建隧道或桥梁'], ['map', '27 个片区逐年开放', '珠江新城、番禺、大学城按真实年份开放'], ['building', '33 处真实地标', '中山纪念堂、广州塔、东塔按落成年份出现'], ['flag', '7 项历史任务', '参考广州地铁的发展需求，不要求复刻真实线路']],
       highlights: [[1993, '珠江新城开始规划'], [1996, '广州东站建成'], [2000, '番禺撤市设区'], [2004, '新白云机场与大学城启用'], [2010, '亚运会，广州塔落成']],
       geo: CM.GEO, data: Object.assign({}, CM.DATA),
-      cfg: GZ_CFG,
+      // L8：把史料分界年从 2020 推到 2024（仅改 histEnd，popCurve 沿用默认，避免冲击无头基线）
+      cfg: Object.assign({}, GZ_CFG, { growth: Object.assign({}, CFG.growth, { histEnd: 2024 }) }),
       cam: { cx: 30, cy: 41, zoom: 18 },
     },
   };
