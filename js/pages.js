@@ -639,6 +639,8 @@
     const def = defs[key];
     if (!def) return null;
     el.appendChild(h('div', { style: { fontSize: '22px', fontWeight: 700, margin: '4px 0 8px' } }, this.liveText(def.val)));
+    // 冷启动求解未完成时 daily 为 null，此处数值会是占位值：给出提示（L5 P2）
+    if (!g.model.daily) el.appendChild(h('div', { class: 'note', style: { margin: '2px 0 6px' } }, '客流数据计算中…（开局后数秒内完成）'));
     if (key === 'share' && d.ready) {
       const dw = g.model.dailyWk || d, de = g.model.dailyWe || d;
       el.appendChild(this.kv([['日均出行（汽车+地铁，周平均）', U.fmtPeople(d.trips) + ' 人次'], ['其中地铁', U.fmtPeople(d.metro) + ' 人次'], ['工作日 / 周末分担率', U.fmtPct(dw.metroShare || 0) + ' / ' + U.fmtPct(de.metroShare || 0)], ['工作日 / 周末地铁客运量', U.fmtPeople(dw.metro || 0) + ' / ' + U.fmtPeople(de.metro || 0) + ' 人次'], ['步行 15 分钟可达地铁的人口', U.fmtPct(d.coverage)], ['平均票价', d.metro > 0 ? U.fmtNum(d.avgFare, 2) + ' ' + CFG.money.unit : '—']]));

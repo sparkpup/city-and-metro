@@ -407,7 +407,8 @@
       if (Math.abs(dlt) < (pct ? 0.0005 : 0.005)) return '';
       return '<span class="trend ' + ((betterUp ? dlt > 0 : dlt < 0) ? 'good' : 'bad') + '">' + (dlt > 0 ? '▲' : '▼') + '</span>';
     };
-    c.share.v.innerHTML = U.fmtPct(d.metroShare || 0) + ' ' + trend(d.metroShare || 0, prev && prev.share, true, true);
+    // 冷启动 / 网络变更后求解未完成时 daily 为 null：显示「计算中…」而不是误导性的 0.00%（L5 P2）
+    c.share.v.innerHTML = g.model.daily ? (U.fmtPct(d.metroShare || 0) + ' ' + trend(d.metroShare || 0, prev && prev.share, true, true)) : '计算中…';
     if (!this._congT || performance.now() - this._congT > 900) { this._congT = performance.now(); this._cong = g.model.cityCongAt(W); }
     const cg = this._cong;
     c.cong.v.innerHTML = cg.toFixed(2) + ' <small>' + (cg < 1.25 ? '畅通' : (cg < 1.6 ? '缓行' : '拥堵')) + '</small>';
