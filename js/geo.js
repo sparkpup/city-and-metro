@@ -42,7 +42,7 @@
   };
   // 解码结果按数据源缓存：切换地图时不必重新解码
   const cache = new Map();
-  const KEYS = ['names', 'water', 'waterLines', 'roads', 'streets', 'rail', 'parks', 'reserves', 'woods', 'admin', 'places', 'streetBk', 'adminBk'];
+  const KEYS = ['names', 'water', 'waterLines', 'roads', 'streets', 'rail', 'parks', 'reserves', 'woods', 'admin', 'places', 'streetBk', 'adminBk', 'woodsBk', 'reservesBk', 'parksBk', 'waterBk', 'waterLinesBk', 'railBk'];
   Geo.init = function () {
     if (Geo.ready && Geo.src === CM.GEO) return Geo;
     const G = CM.GEO, names = G.names;
@@ -78,6 +78,13 @@
     Geo.places = G.places || [];
     Geo.streetBk = Geo.buckets(Geo.streets, 4, CM.CFG.W, CM.CFG.H);
     Geo.adminBk = Geo.buckets(Geo.admin, 16, CM.CFG.W, CM.CFG.H);   // 区划面普遍很大，桶取大一些避免重复登记
+    // 面/线要素的视口剔除桶：render 每帧只取视口内要素，避免遍历全部（与换图同步重建并随缓存恢复）
+    Geo.woodsBk = Geo.buckets(Geo.woods, 8, CM.CFG.W, CM.CFG.H);
+    Geo.reservesBk = Geo.buckets(Geo.reserves, 8, CM.CFG.W, CM.CFG.H);
+    Geo.parksBk = Geo.buckets(Geo.parks, 8, CM.CFG.W, CM.CFG.H);
+    Geo.waterBk = Geo.buckets(Geo.water, 16, CM.CFG.W, CM.CFG.H);   // 水面多为大湖泊/海域，桶取大些避免重复登记
+    Geo.waterLinesBk = Geo.buckets(Geo.waterLines, 8, CM.CFG.W, CM.CFG.H);
+    Geo.railBk = Geo.buckets(Geo.rail, 8, CM.CFG.W, CM.CFG.H);
     const saved = {}; for (const k of KEYS) saved[k] = Geo[k];
     cache.set(G, saved);
     Geo.src = G; Geo.ready = true;

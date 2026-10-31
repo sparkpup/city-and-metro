@@ -761,19 +761,21 @@
       }
       for (let q = 0; q < 3; q++) if (any[q]) { ctx.fillStyle = 'rgba(255,190,110,' + [0.05, 0.09, 0.14][q] + ')'; ctx.fill(glow[q]); }
     }
+    // 视口剔除：只取当前视口内的要素（分桶由 Geo.init 每图预建），避免每帧遍历全部要素
+    const qIdx = function (bk, arr) { return bk ? Geo.query(bk, X0 - 0.5, Y0 - 0.5, X1 + 0.5, Y1 + 0.5) : arr.map(function (_, k) { return k; }); };
     // 林地（真实范围）
     ctx.fillStyle = GROUND.wood;
     const wp = new Path2D();
-    for (const f of Geo.woods) if (inBox(f.bbox, 0.5)) wp.addPath(this.featurePath(f, true));
+    for (const k of qIdx(Geo.woodsBk, Geo.woods)) { const f = Geo.woods[k]; if (inBox(f.bbox, 0.5)) wp.addPath(this.featurePath(f, true)); }
     ctx.fill(wp, 'evenodd');
     // 风景区山体：雾蓝绿色
     // 逐个填充：风景区内常有嵌套的子景区，合在一条路径里用奇偶规则会互相抵消成空洞
     ctx.fillStyle = GROUND.hill[0]; ctx.globalAlpha = 0.85;
-    for (const f of Geo.reserves) if (inBox(f.bbox, 0.5)) ctx.fill(this.featurePath(f, true), 'evenodd');
+    for (const k of qIdx(Geo.reservesBk, Geo.reserves)) { const f = Geo.reserves[k]; if (inBox(f.bbox, 0.5)) ctx.fill(this.featurePath(f, true), 'evenodd'); }
     ctx.globalAlpha = 1;
     // 公园（真实范围）
     const pp = new Path2D();
-    for (const f of Geo.parks) if (inBox(f.bbox, 0.5)) pp.addPath(this.featurePath(f, true));
+    for (const k of qIdx(Geo.parksBk, Geo.parks)) { const f = Geo.parks[k]; if (inBox(f.bbox, 0.5)) pp.addPath(this.featurePath(f, true)); }
     ctx.fillStyle = GROUND.park; ctx.fill(pp, 'evenodd');
     if (lvl >= 16) { ctx.strokeStyle = GROUND.parkEdge; ctx.lineWidth = px * 1.2; ctx.stroke(pp); }
     // 旧机场跑道
@@ -794,7 +796,7 @@
     }
     // 水系（真实岸线）
     const wpth = new Path2D();
-    for (const f of Geo.water) if (inBox(f.bbox, 0.5)) wpth.addPath(this.featurePath(f, true));
+    for (const k of qIdx(Geo.waterBk, Geo.water)) { const f = Geo.water[k]; if (inBox(f.bbox, 0.5)) wpth.addPath(this.featurePath(f, true)); }
     ctx.lineJoin = 'round'; ctx.lineCap = 'round';
     // 历史海岸线：尚未填海成陆的区域仍画成水面（单独以 nonzero 填充，避免与海域多边形的奇偶规则抵消）
     const rpth = new Path2D(); let anyRc = false;
@@ -814,7 +816,8 @@
       }
       ctx.stroke(); ctx.restore();
     }
-    for (const l of Geo.waterLines) {
+    for (const k of qIdx(Geo.waterLinesBk, Geo.waterLines)) {
+      const l = Geo.waterLines[k];
       if (!inBox(l.bbox, 0.5)) continue;
       ctx.strokeStyle = GROUND.water; ctx.lineWidth = Math.max(l.w, px * 1.5);
       ctx.stroke(this.featurePath(l, false));
@@ -876,7 +879,8 @@
     }
     // 铁路
     const RD = TH.road;
-    for (const r of Geo.rail) {
+    for (const k of qIdx(Geo.railBk, Geo.rail)) {
+      const r = Geo.rail[k];
       if (!inBox(r.bbox, 0.5) || (r.flags & 2)) continue;
       if ((r.flags & 16) && g.clock.y < (D.hsrYear || 2009)) continue;   // 高速铁路按本地图的开通年份出现
       if (r.year && g.clock.y < r.year) continue;
