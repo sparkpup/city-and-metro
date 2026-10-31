@@ -1155,7 +1155,7 @@
   // 票价：全网统一票价，单个滑块。拖动时更新金额与影响估算，松手后应用并重新计算客流
   UI.fmtFare = function (v) { return CFG.money.sym + (v % 1 ? (v * 10 % 1 ? v.toFixed(2) : v.toFixed(1)) : String(v)) + '/次'; };
   UI.prototype.fareEditor = function () {
-    const g = this.g(), E = g.econ, self = this, R = CFG.fareRange;
+    const g = this.g(), E = g.econ, self = this, R = CM.fareRangeNow ? CM.fareRangeNow(g) : CFG.fareRange;
     const box = h('div', { class: 'fare-ed' });
     const val = h('div', { class: 'fare-v' });
     const slider = h('input', { type: 'range', min: R.min, max: R.max, step: R.step, value: E.fare.flat, 'aria-label': '全网统一票价' });

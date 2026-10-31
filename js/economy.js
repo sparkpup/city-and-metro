@@ -377,6 +377,8 @@
     const R = CFG.fareRange;
     let v = f ? (f.mode === 'flat' ? f.flat : f.base) : CFG.fareDefault.flat;
     if (!isFinite(v)) v = CFG.fareDefault.flat;
+    // 票价随物价放大的地图（fareRange.scale）：上限随时间变，读档时不按开局上限截断，只取非负并按步长取整
+    if (R.scale) return { mode: 'flat', flat: Math.max(0, Math.round(v / R.step) * R.step) };
     return { mode: 'flat', flat: U.clamp(Math.round(v / R.step) * R.step, R.min, R.max) };
   };
   // 票价对满意度的影响（与月度满意度计算同一公式）

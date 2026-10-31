@@ -246,7 +246,8 @@
     const streetOf = new Map(), distOf = new Map();
     regions.forEach(function (rg, k) {
       if (rg.geo) {
-        const list = rg.geo.reserve ? Geo.reserves.filter(function (f) { return f.name === rg.geo.reserve; }) : Geo.parks.filter(function (f) { return f.name === rg.geo.park; });
+        // 风景区 / 公园范围，或按行政界线整体划定（geo.admin：嵌在区里的风景区、开发区等，按区域顺序优先于街道与区）
+        const list = rg.geo.reserve ? Geo.reserves.filter(function (f) { return f.name === rg.geo.reserve; }) : rg.geo.admin ? Geo.admin.filter(function (f) { return f.name === rg.geo.admin; }) : Geo.parks.filter(function (f) { return f.name === rg.geo.park; });
         fillCells(list, k);
       }
       // 山地风景区按林地覆盖率划定（如香港郊野公园的山体），woodMin 为最低林地覆盖率

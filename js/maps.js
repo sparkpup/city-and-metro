@@ -16,6 +16,18 @@
       road: Object.assign({}, GZ_CFG.road, { capGrowth: shift(GZ_CFG.road.capGrowth, off) }),
     };
   };
+  // 票价滑块的范围：默认就是 CFG.fareRange（各城一致）。声明了 fareRange.scale 的地图（长时段、物价变化大，如巴黎 1900）
+  // 按本城造价指数放大上下限，否则票价停在开局的名义值上，几十年后实际购买力接近于零、无法与上涨的造价对照。
+  // 没有 scale 的地图返回原对象，行为与加此函数前完全一致。
+  CM.fareRangeNow = function (g) {
+    const R = CFG.fareRange;
+    if (!R || !R.scale || !g || !g.econ) return R;
+    const k = g.econ.costIndex(g.clock.y);
+    if (!isFinite(k) || k <= 0) return R;
+    const raw = R.step * k, p = Math.pow(10, Math.floor(Math.log10(raw))), f = raw / p;
+    const step = (f >= 5 ? 5 : f >= 2 ? 2 : 1) * p;
+    return { min: 0, max: Math.max(step * 4, Math.round(R.max * k / step) * step), step: step };
+  };
   const MAPS = {
     gz: {
       id: 'gz', name: '广州', title: '广州 · 1990', sub: '真实地理 · 1990 年起 · 人民币',
@@ -63,11 +75,11 @@
   // 字段：id 唯一键 / name 组标题 / sub 副标题 / ids 成员城市 id（一城单归属，先到先得）
   //      / expanded 默认展开 / sort 组间升序（小的在上）/ status 筹备状态 / force 强制可见
   const MODES = [
-    // 可见规则要求「ids 里真实存在的城市 ≥ 2」：上海落地后从 ['sz'] 补成 ['sz','sh']，
-    // 「长三角都市圈」组才真正出现在选图页（此前只有一个成员，整组被隐藏）。
-    // 2026-10-31 无锡落地：补入 'wx' → 组内 苏州 · 上海 · 无锡 三城（常州待建）。
-    { id: 'east', name: '长三角都市圈', sub: '苏州 · 上海 · 无锡 · 常州',
-      ids: ['sz', 'sh', 'wx'], status: 'live', sort: 10, expanded: true },
+    // 新手入门：教程单独成组并置顶（force 让单成员组可见），避免并入都市圈后教程被挤到第二组
+    { id: 'starter', name: '新手入门', sub: '先跑教程，再挑城市', ids: ['tutorial'], status: 'live', sort: 5, expanded: true, force: true },
+    // 长三角都市圈：2026-10-31 无锡落地补 'wx'；2026-11-01 并入杭州 'hz'（沪苏锡杭 4 城，常州筹备中）。
+    { id: 'east', name: '长三角都市圈', sub: '沪苏锡杭 · 4 城 · 常州筹备中',
+      ids: ['sz', 'sh', 'wx', 'hz'], status: 'live', sort: 10, expanded: true },
     { id: 'chengyu', name: '成渝都市圈', sub: '重庆 · 成都',
       ids: [], status: 'planned', sort: 20, expanded: false },
     { id: 'classic', name: '经典地图', sub: '单城经营 · 组内由易到难',
