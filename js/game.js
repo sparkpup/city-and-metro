@@ -43,7 +43,7 @@
     g.econ = new CM.Economy(g.mode, g.clock.y, g.clock.m);
     g.model.fare = g.econ.fare;
     g.tasks = new CM.Tasks();
-    g.model.solveNow(2);
+    g.model.solveNow(1);
     g.econ.startMonth(g.clock.y, g.clock.m);
     const e0 = D.events && D.events[0];
     if (e0) g.logEvent({ tag: e0.tag || '史实', title: e0.title, desc: e0.desc });
@@ -641,7 +641,7 @@
     g.favs = { stations: (s.favs && s.favs.stations) || [], lines: (s.favs && s.favs.lines) || [], names: (s.favs && s.favs.names) || {} };
     g.mapInit = s.mapInit || null;
     g.milestones = s.milestones || null;
-    g.model.solveNow(2);
+    g.model.solveNow(1);
     if (CM.Milestones) CM.Milestones.backfill(g);
     // 城市经济：有数据则恢复；1.7 及更早的存档（或数据不完整）从当前状态接入，不补造过去的记录，不改变已有资金与债务。
     // 接入失败时本局不启用经济模拟，原存档不受影响
