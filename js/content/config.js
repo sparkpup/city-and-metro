@@ -198,6 +198,6 @@
     // useWorker：把「建设前客流预测」搬到 js/sim.worker.js（主线程不再被 2.4~3.9s 的同步计算卡住）。
     // 默认 false = 完全走原有主线程路径；打开后若 Worker 不可用 / 握手失败 / 请求报错，自动退回原路径。
     perf: { solverBudgetMs: 5, chunkBudgetMs: 6, cacheMaxPx: 24e6, maxCars: 320, maxPeds: 180, maxWalkers: 120, maxRiders: 120, trainVoices: 3, maxOneShots: 6,
-      useWorker: false, workerTimeoutMs: 60000, workerHandshakeMs: 20000 },
+      useWorker: true, workerTimeoutMs: 60000, workerHandshakeMs: 20000 },
   };
 })(window.CM);
