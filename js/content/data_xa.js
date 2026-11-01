@@ -209,6 +209,86 @@
       // 灞桥·浐灞：西安世博园 2011-04 随世界园艺博览会开园；浐灞国家湿地公园 2013 年建成开放
       at(34.3376, 109.0253, { id: 'xa_shibo', name: '西安世博园', w: 1200, d: 900, year: 2011, kind: 'expo' }),
       at(34.3700, 109.0400, { id: 'xa_chanba_wetland', name: '浐灞国家湿地公园', w: 1400, d: 1000, year: 2013, kind: 'park' }),
+
+      // —— daming 补充（OSM 公园/景点实测，原有 1 个）——
+      at(34.29769, 108.9596, { name: '蓬莱岛遗址', w: 90, d: 90, year: null, kind: 'traditional' }),
+      // —— xincheng 补充（OSM 公园/景点实测，原有 3 个）——
+      at(34.28557, 108.96878, { name: '大华1935（大华纺织厂旧址）', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— lianhu 补充（OSM 公园/景点实测，原有 5 个）——
+      at(34.24923, 108.89412, { name: '丰庆公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.26672, 108.89971, { name: '劳动公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.25053, 108.88412, { name: '西安牡丹苑', w: 90, d: 90, year: 2008, kind: 'scenic' }),
+      at(34.26633, 108.91926, { name: '环城西苑', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.2703, 108.93558, { name: '莲湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.26346, 108.92479, { name: '西安儿童公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.25431, 108.92192, { name: '无极公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— gaoxin 补充（OSM 公园/景点实测，原有 2 个）——
+      at(34.23164, 108.8919, { name: '新纪元公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.20992, 108.89057, { name: '木塔寺生态遗址公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      // —— qujiang 补充（OSM 公园/景点实测，原有 3 个）——
+      at(34.20023, 108.98602, { name: '曲江寒窑遗址公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.18402, 109.02077, { name: '汉宣帝杜陵（上林苑）', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.19473, 108.97957, { name: '秦二世陵遗址公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.18381, 108.98556, { name: '曲江文化运动公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.16918, 108.98446, { name: '明秦王世子遗址公园', w: 90, d: 90, year: 2012, kind: 'traditional' }),
+      at(34.19858, 109.03229, { name: '中国唐苑', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.21022, 108.98428, { name: '曲江乐园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.21708, 108.97609, { name: '曲江海洋极地公园', w: 90, d: 90, year: 2011, kind: 'scenic' }),
+      at(34.22555, 108.99711, { name: '曲江景园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— weiyang 补充（OSM 公园/景点实测，原有 2 个）——
+      at(34.31825, 108.97459, { name: '红旗铁路公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.32284, 108.93102, { name: '文景公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— bazhicheng 补充（OSM 公园/景点实测，原有 4 个）——
+      at(34.26342, 108.99466, { name: '长乐公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.29572, 108.98413, { name: '东元公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— baqiao 补充（OSM 公园/景点实测，原有 3 个）——
+      at(34.21876, 109.09684, { name: '西汉薄太后陵', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.26695, 109.05714, { name: '纺织公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.27404, 109.0478, { name: '半坡博物馆', w: 90, d: 90, year: null, kind: 'gallery' }),
+      at(34.29498, 109.08095, { name: '浐灞湿地公园', w: 90, d: 90, year: 2013, kind: 'scenic' }),
+      at(34.32245, 109.05907, { name: '西安世博公园', w: 90, d: 90, year: 2011, kind: 'scenic' }),
+      at(34.30651, 109.12437, { name: '向阳四区绿化带', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.35647, 109.00633, { name: '广运潭公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.36032, 109.04064, { name: '新寺遗址', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.37016, 109.06437, { name: '启航公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— beike 补充（OSM 公园/景点实测，原有 2 个）——
+      at(34.38556, 108.93772, { name: '文景山公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.40219, 108.96585, { name: '幸福河生态公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— qinling 补充（OSM 公园/景点实测，原有 2 个）——
+      at(34.38358, 109.25408, { name: '秦始皇帝陵博物院丽山园', w: 90, d: 90, year: null, kind: 'gallery' }),
+      at(34.38598, 109.27629, { name: '秦始皇兵马俑博物馆', w: 90, d: 90, year: null, kind: 'gallery' }),
+      // —— xianyang 补充（OSM 公园/景点实测，原有 3 个）——
+      at(34.28932, 108.66249, { name: '咸阳牡丹园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.3326, 108.71879, { name: '渭滨公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.2927, 108.71278, { name: '沣西新城环形公园三期', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.30512, 108.72586, { name: '白马河公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.33408, 108.77378, { name: '金湾文化公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.34021, 108.73814, { name: '古渡公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.40208, 108.78244, { name: '陕西张裕瑞那城堡酒庄', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— xixian 补充（OSM 公园/景点实测，原有 0 个）——
+      at(34.20663, 108.76954, { name: '昆明池七夕公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.19748, 108.82141, { name: '鹤鸣湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.22656, 108.78325, { name: '汉溪湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.21597, 108.83527, { name: '西安人才公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.24171, 108.83335, { name: '雁塔区亲水公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.26399, 108.80858, { name: '阿房宫考古遗址公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.26647, 108.8374, { name: '红光公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.30165, 108.8547, { name: '汉长安城未央宫国家考古遗址公园', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.31243, 108.82676, { name: '汉太液池遗址', w: 90, d: 90, year: null, kind: 'traditional' }),
+      // —— gaoling 补充（OSM 公园/景点实测，原有 1 个）——
+      at(34.50102, 108.91858, { name: '泾河新城体育中心', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.49699, 108.93723, { name: '崇文塔景区', w: 90, d: 90, year: null, kind: 'traditional' }),
+      at(34.51335, 108.99107, { name: '西安兵器博物馆', w: 90, d: 90, year: null, kind: 'gallery' }),
+      at(34.53308, 108.8341, { name: '泾干湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.53158, 109.09879, { name: '水景公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— outer 补充（OSM 公园/景点实测，原有 5 个）——
+      at(34.1963, 108.74468, { name: '西安沣东现代都市农业示范园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.15494, 108.85524, { name: '郭杜森林公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.15317, 108.82988, { name: '永安渠海绵城市生态公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.15394, 108.96653, { name: '航天城中湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.15335, 108.95728, { name: '星河运动公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.16323, 109.29983, { name: '青羊湖风景区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(34.24395, 108.718, { name: '城市健康公园', w: 90, d: 90, year: null, kind: 'scenic' }),
     ],
     // 重要设施（见 facility.js）：位置与启用/停用年份为史实参考（位置近似）；规模均为估算。
     // 枢纽 pax：市内接驳出行（万人次/日）；w：占全市该目的出行吸引的比例（同目的合计 ≤0.5）。
