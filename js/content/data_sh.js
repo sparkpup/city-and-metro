@@ -177,6 +177,73 @@
       Object.assign(atW(31.2356, 121.5013), { id: 'sh_tower', name: '上海中心大厦', w: 80, d: 80, year: 2015, kind: 'skyscraper', style: 'shtower', h: 632 }),
       Object.assign(atW(31.1463, 121.6560), { id: 'sh_disney', name: '上海迪士尼乐园', w: 1150, d: 900, h: 60, year: 2016, kind: 'themepark', style: 'castle' }),   // 约 91 公顷，奇幻童话城堡约 60 m
       Object.assign(atW(31.3750, 121.2400), { id: 'sh_jiading', name: '嘉定汇龙潭·秋霞圃', w: 200, d: 180, year: 1588, kind: 'traditional' }),
+      // —— 补充地标（社区补充，OSM WGS-84 坐标走 atW；坐标均经 tests/headless/probe-cell.mjs 复核 landFrac）——
+      // 黄浦
+      Object.assign(atW(31.2360, 121.4775), { id: 'sh_njbx', name: '南京路步行街', w: 1000, d: 60, year: 1999, kind: 'mall' }),   // 1999 年南京东路改造为步行街
+      Object.assign(atW(31.2335, 121.4700), { id: 'sh_plan', name: '上海城市规划展示馆', w: 90, d: 80, year: 2000, kind: 'museum' }),
+      Object.assign(atW(31.2327, 121.4717), { id: 'sh_concert', name: '上海音乐厅', w: 70, d: 60, year: 1930, kind: 'concert' }),   // 原南京大戏院，1930 年建成
+      Object.assign(atW(31.2092, 121.4677), { id: 'sh_tianzi', name: '田子坊', w: 130, d: 100, year: 2006, kind: 'traditional' }),
+      Object.assign(atW(31.1970, 121.4804), { id: 'sh_psa', name: '上海当代艺术博物馆', w: 160, d: 90, year: 2012, kind: 'gallery' }),   // 原南市发电厂，2012 年改建开放
+      // 静安
+      Object.assign(atW(31.2367, 121.4567), { id: 'sh_nhm', name: '上海自然博物馆', w: 120, d: 100, year: 2015, kind: 'museum' }),
+      Object.assign(atW(31.2828, 121.4570), { id: 'sh_circus', name: '上海马戏城', w: 110, d: 100, year: 1999, kind: 'concert' }),
+      Object.assign(atW(31.2448, 121.4600), { id: 'sh_sihang', name: '四行仓库', w: 90, d: 45, year: 1931, kind: 'colonial' }),
+      // 徐汇
+      Object.assign(atW(31.2148, 121.4405), { id: 'sh_lib', name: '上海图书馆', w: 110, d: 100, year: 1996, kind: 'library' }),
+      Object.assign(atW(31.2032, 121.4358), { id: 'sh_wukang', name: '武康大楼', w: 45, d: 32, rot: 30, year: 1924, kind: 'colonial', h: 30 }),
+      Object.assign(atW(31.1878, 121.4370), { id: 'sh_film', name: '上海电影博物馆', w: 80, d: 80, year: 2013, kind: 'museum' }),
+      Object.assign(atW(31.1510, 121.4390), { id: 'sh_botanic', name: '上海植物园', w: 900, d: 800, year: 1974, kind: 'scenic' }),
+      // 长宁
+      Object.assign(atW(31.2215, 121.4145), { id: 'sh_zspark', name: '中山公园', w: 320, d: 260, year: 1914, kind: 'scenic' }),   // 原兆丰公园，1914 年开放
+      Object.assign(atW(31.1955, 121.3600), { id: 'sh_zoo2', name: '上海动物园', w: 700, d: 600, year: 1954, kind: 'scenic' }),   // 原西郊公园
+      Object.assign(atW(31.2168, 121.4075), { id: 'sh_columbia', name: '上生·新所', w: 130, d: 110, year: 1924, kind: 'colonial' }),   // 哥伦比亚乡村俱乐部旧址
+      Object.assign(atW(31.2178, 121.4130), { id: 'sh_liu', name: '刘海粟美术馆', w: 70, d: 60, year: 1995, kind: 'gallery' }),
+      // 普陀
+      Object.assign(atW(31.2452, 121.4058), { id: 'sh_zhongru', name: '真如寺', w: 170, d: 150, year: 1320, kind: 'temple', h: 52 }),   // 真如寺正殿为元代木构，塔 1996 年重建
+      Object.assign(atW(31.2342, 121.4155), { id: 'sh_global', name: '上海环球港', w: 260, d: 180, year: 2013, kind: 'mall' }),
+      Object.assign(atW(31.2278, 121.3925), { id: 'sh_cfpark', name: '长风公园', w: 400, d: 360, year: 1959, kind: 'scenic' }),
+      // 虹口
+      Object.assign(atW(31.2478, 121.4828), { id: 'sh_post', name: '上海邮政总局大楼', w: 70, d: 45, year: 1924, kind: 'colonial' }),
+      Object.assign(atW(31.2588, 121.4790), { id: 'sh_duolun', name: '多伦路文化名人街', w: 320, d: 45, year: 1998, kind: 'traditional' }),
+      Object.assign(atW(31.2565, 121.4903), { id: 'sh_1933', name: '1933 老场坊', w: 85, d: 85, year: 1933, kind: 'colonial' }),   // 原工部局宰牲场
+      Object.assign(atW(31.2560, 121.4928), { id: 'sh_jewish', name: '上海犹太难民纪念馆', w: 55, d: 45, year: 1927, kind: 'museum' }),   // 摩西会堂旧址
+      // 杨浦
+      Object.assign(atW(31.3025, 121.5150), { id: 'sh_jiangwan', name: '江湾体育场', w: 240, d: 200, year: 1935, kind: 'stadium' }),   // 「大上海计划」体育场
+      Object.assign(atW(31.2655, 121.5320), { id: 'sh_fashion', name: '上海国际时尚中心', w: 200, d: 130, year: 2010, kind: 'colonial' }),   // 原十七棉纺厂
+      Object.assign(atW(31.2900, 121.5080), { id: 'sh_usstech', name: '上海理工大学', w: 700, d: 600, year: 1906, kind: 'campus' }),   // 原沪江大学
+      Object.assign(atW(31.2872, 121.5235), { id: 'sh_yplib', name: '杨浦区图书馆', w: 60, d: 50, year: 1936, kind: 'library' }),   // 原上海市图书馆，1936 年建成
+      // 陆家嘴
+      Object.assign(atW(31.2362, 121.5058), { id: 'sh_ifc', name: '上海国金中心', w: 70, d: 70, year: 2010, kind: 'skyscraper', h: 260 }),
+      Object.assign(atW(31.2333, 121.5096), { id: 'sh_sse', name: '上海证券交易所', w: 60, d: 60, year: 1997, kind: 'skyscraper', h: 110 }),
+      Object.assign(atW(31.2402, 121.5032), { id: 'sh_aqua', name: '上海海洋水族馆', w: 110, d: 90, year: 2002, kind: 'museum' }),
+      // 浦东（花木·张江）
+      Object.assign(atW(31.2195, 121.5450), { id: 'sh_sci', name: '上海科技馆', w: 200, d: 160, year: 2001, kind: 'museum' }),
+      Object.assign(atW(31.2278, 121.5425), { id: 'sh_oac', name: '东方艺术中心', w: 170, d: 130, year: 2004, kind: 'concert' }),
+      Object.assign(atW(31.1795, 121.5880), { id: 'sh_shanghaitech', name: '上海科技大学', w: 800, d: 700, year: 2013, kind: 'campus' }),
+      Object.assign(atW(31.2272, 121.5522), { id: 'sh_libe', name: '上海图书馆东馆', w: 130, d: 110, year: 2022, kind: 'library' }),
+      // 三林·前滩
+      Object.assign(atW(31.1560, 121.4740), { id: 'sh_qiantan', name: '前滩太古里', w: 220, d: 160, year: 2021, kind: 'mall' }),
+      // 浦东沿江（世博园）
+      Object.assign(atW(31.1890, 121.4970), { id: 'sh_mbarena', name: '梅赛德斯-奔驰文化中心', w: 180, d: 160, year: 2010, kind: 'stadium' }),
+      // 原坐标 31.1612,121.4648 落黄浦江（landFrac=0.00）；改用 probe 给出的最近陆地并东移 1 格
+      Object.assign(atW(31.1620, 121.4720), { id: 'sh_osports', name: '东方体育中心', w: 260, d: 200, year: 2010, kind: 'stadium' }),
+      // 宝山
+      Object.assign(atW(31.3450, 121.4010), { id: 'sh_gucun', name: '顾村公园', w: 900, d: 700, year: 2010, kind: 'scenic' }),
+      Object.assign(atW(31.3890, 121.3450), { id: 'sh_baoshan', name: '宝山寺', w: 200, d: 180, year: 2005, kind: 'temple', h: 50 }),   // 罗店新寺 2005 年落成
+      Object.assign(atW(31.3930, 121.5020), { id: 'sh_paotaiwan', name: '吴淞炮台湾湿地森林公园', w: 400, d: 300, year: 2007, kind: 'scenic' }),   // 吴淞口西岸，2007 年建成开放
+      // 原坐标 31.3735,121.5035 落在黄浦江东岸高桥片；改用临江公园西岸（宝山友谊路街道）
+      Object.assign(atW(31.3740, 121.4880), { id: 'sh_songhu', name: '淞沪抗战纪念馆', w: 120, d: 100, year: 2000, kind: 'memorial' }),
+      // 闵行（七宝·梅陇）
+      Object.assign(atW(31.1538, 121.3538), { id: 'sh_qibao', name: '七宝老街', w: 320, d: 130, year: 2000, kind: 'traditional' }),   // 古镇北宋成形，2000 年修复开放
+      Object.assign(atW(31.1420, 121.4090), { id: 'sh_jinjiang', name: '锦江乐园', w: 320, d: 260, year: 1985, kind: 'themepark' }),
+      // 嘉定
+      Object.assign(atW(31.3822, 121.2598), { id: 'sh_confucius', name: '嘉定孔庙', w: 160, d: 130, year: 1219, kind: 'traditional' }),   // 南宋嘉定十二年建
+      Object.assign(atW(31.3830, 121.2555), { id: 'sh_fahua', name: '法华塔', w: 60, d: 60, year: 1575, kind: 'pagoda', h: 40 }),
+      Object.assign(atW(31.3120, 121.3130), { id: 'sh_guyi', name: '古猗园', w: 260, d: 200, year: 1522, kind: 'traditional' }),   // 明嘉靖年间建
+      // 虹桥商务区·青浦·昆山
+      Object.assign(atW(31.1930, 121.3052), { id: 'sh_necc', name: '国家会展中心', w: 900, d: 700, year: 2015, kind: 'expo' }),
+      Object.assign(atW(31.1075, 121.0560), { id: 'sh_zhujiajiao', name: '朱家角古镇', w: 500, d: 400, year: 1571, kind: 'traditional' }),   // 放生桥 1571 年建
+      Object.assign(atW(31.1105, 121.0210), { id: 'sh_orientalland', name: '东方绿舟', w: 650, d: 550, year: 2002, kind: 'scenic' }),
     ],
     // 重要设施（见 facility.js）：位置与启用 / 停用年份为史实参考（位置近似）；规模均为估算。
     // 枢纽 pax：市内接驳出行（汽车 + 地铁，万人次/日）；浦东国际机场在地图东缘以东约 9 km，于川沙一带设出图接驳点。

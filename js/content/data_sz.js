@@ -193,6 +193,7 @@
       // —— 2026-10-28 南扩补点（吴江/汾湖）——
       // 同里古镇：镇域中心 OSM 实测 31.1552/120.7132；year 取退思园落成 1885（古镇本体成于宋代，退思园为可考标志建筑）
       at(31.1552, 120.7132, { id: 'sz_tongli', name: '同里古镇', w: 700, d: 560, year: 1885, kind: 'traditional' }),
+      at(31.1556, 120.7160, { id: 'sz_tuisiyuan', name: '退思园', w: 120, d: 100, year: 1885, kind: 'traditional' }),   // 同里镇内（世界文化遗产，1885 年建成）
       // 苏州南站：维基 31.0655/120.7950（31°3′56″N 120°47′42″E），沪苏湖高铁 2024-12-26 启用
       at(31.0655, 120.7950, { id: 'sz_southstation', name: '苏州南站', w: 400, d: 240, year: 2024, kind: 'rail' }),
       // —— 2026-10-29 南北全并新增地标（常熟/张家港/盛泽；坐标经地理常识落位，landFrac 由 facility 落码校验；常熟站/张家港站为 rail，对应下方 facilities）——
@@ -205,6 +206,75 @@
       at(30.9000, 120.6500, { id: 'sz_xiancan', name: '盛泽先蚕祠', w: 160, d: 160, year: 1840, kind: 'traditional' }),       // 绸都丝业公所，蚕神祭祀
       at(31.6900, 120.7400, { id: 'sz_changshustation', name: '常熟站', w: 360, d: 200, year: 2020, kind: 'rail' }),          // 沪苏通铁路 2020-07 开通
       at(31.8300, 120.5550, { id: 'sz_zjgstation', name: '张家港站', w: 360, d: 200, year: 2020, kind: 'rail' }),             // 沪苏通铁路 2020-07 开通
+      // —— 2026-11-01 补标志性地点（各片区覆盖）——
+      // 坐标全部先经 tests/headless/probe-cell.mjs --city sz 验 landFrac ≥0.3 与区域归属；落码后整体复验。
+      // kind 口径：山林/大型公园用 campus（渲染为草地底色，同本文件 sz_centralpark/sz_szparadise 先例）；
+      // 'park' 在 render.js 无分支会落到默认灰块，大场地不用；古镇古寺 traditional/temple，馆 gallery，市场 box。
+      // year 只写可考的落成年，不确定的省略（不编造）。
+      // —— 木渎·藏书 / 吴中西部 ——
+      at(31.2578, 120.5262, { id: 'sz_mudu', name: '木渎古镇', w: 700, d: 560, kind: 'traditional' }),             // 吴中木渎，2500 年水乡古镇（乾隆六下江南驻跸地）
+      at(31.2470, 120.5070, { id: 'sz_lingyan', name: '灵岩山', w: 300, d: 300, kind: 'temple' }),                 // 木渎灵岩山寺（梁代古刹、山顶吴宫遗址）
+      at(31.2706, 120.4780, { id: 'sz_tianping', name: '天平山', w: 500, d: 420, kind: 'campus' }),                // 范仲淹家族山地，红枫三绝
+      at(31.2500, 120.4400, { id: 'sz_qionglong', name: '穹窿山', w: 800, d: 600, kind: 'campus' }),               // 苏州最高峰（341 m），《孙子兵法》诞生地
+      at(31.2521, 120.5841, { id: 'sz_shangfang', name: '上方山', w: 600, d: 500, kind: 'campus' }),               // 石湖西岸上方山国家森林公园（原坐标 120.5880 落石湖水面→移到湖岸陆地）
+      at(31.2700, 120.4600, { id: 'sz_tianchi', name: '天池山', w: 400, d: 350, kind: 'campus' }),                 // 藏书天池山（寂鉴寺石屋）
+      at(31.2660, 120.4650, { id: 'sz_huashan', name: '花山', w: 400, d: 350, kind: 'campus' }),                   // 花山自然风景区（与天池山同属藏书山群）
+      at(31.2615, 120.6415, { id: 'sz_baodai', name: '宝带桥', w: 320, d: 60, year: 819, kind: 'traditional' }),   // 京杭大运河澹台湖口 53 孔石拱桥，唐元和年间建成
+      // —— 高新区（狮山·科技城·浒墅关）——
+      at(31.3350, 120.4450, { id: 'sz_dayang', name: '大阳山', w: 700, d: 600, kind: 'campus' }),                  // 高新区大阳山国家森林公园
+      at(31.3550, 120.4600, { id: 'sz_shushan', name: '树山村', w: 400, d: 350, kind: 'campus' }),                 // 通安镇树山村（梨花、温泉、生态村）
+      at(31.3290, 120.4720, { id: 'sz_baimajian', name: '白马涧龙池', w: 400, d: 350, kind: 'campus' }),           // 枫桥白马涧龙池风景区（落在外围区，见报告）
+      at(31.3120, 120.5600, { id: 'sz_fengqiao', name: '枫桥景区', w: 300, d: 200, kind: 'traditional' }),         // 《枫桥夜泊》枫桥、铁铃关，寒山寺西侧
+      at(31.3075, 120.5540, { id: 'sz_szbwg_w', name: '苏州博物馆西馆', w: 200, d: 160, year: 2021, kind: 'gallery' }),   // 狮山文化广场，2021-09 开放
+      at(31.3620, 120.5180, { id: 'sz_wsg', name: '浒墅关文昌阁', w: 160, d: 140, kind: 'traditional' }),          // 浒墅关运河东岸（省级文保）
+      // —— 相城 ——
+      at(31.3730, 120.6360, { id: 'sz_yuyao', name: '苏州御窑金砖博物馆', w: 200, d: 160, year: 2016, kind: 'gallery' }),  // 元和御窑村，2016 年开馆（刘家琨设计）
+      at(31.3820, 120.6320, { id: 'sz_sunwu', name: '孙武纪念园', w: 260, d: 200, kind: 'memorial' }),             // 相城孙武墓与孙武文化园
+      at(31.3750, 120.6050, { id: 'sz_hetangyuese', name: '荷塘月色湿地公园', w: 600, d: 500, kind: 'campus' }),   // 相城黄桥，千亩荷塘湿地
+      at(31.3950, 120.6100, { id: 'sz_huahui', name: '苏州中国花卉植物园', w: 700, d: 600, kind: 'campus' }),      // 相城北（黄埭—太平一带）花卉植物园
+      at(31.4180, 120.6100, { id: 'sz_weiyang', name: '渭塘中国珍珠宝石城', w: 200, d: 160, kind: 'box' }),        // 渭塘镇珍珠交易市场（“中国珍珠之乡”）
+      // —— 园区（金鸡湖·独墅湖·唯亭）——
+      at(31.3120, 120.6780, { id: 'sz_ligongdi', name: '李公堤', w: 900, d: 60, kind: 'traditional' }),            // 金鸡湖西岸湖堤商业街（仿古堤岸）
+      at(31.3900, 120.7560, { id: 'sz_chongyuan', name: '重元寺', w: 300, d: 260, year: 2007, kind: 'temple' }),   // 唯亭阳澄湖半岛，2007 年重建落成（水上观音阁）
+      at(31.2650, 120.7300, { id: 'sz_bailuyuan', name: '白鹭园', w: 300, d: 250, kind: 'campus' }),               // 独墅湖东岸滨湖公园
+      at(31.2640, 120.7290, { id: 'sz_dshchurch', name: '独墅湖教堂', w: 120, d: 100, kind: 'church' }),           // 独墅湖东岸水上教堂（高教区地标）
+      at(31.3250, 120.7150, { id: 'sz_baitang', name: '白塘生态植物园', w: 600, d: 500, kind: 'campus' }),         // 湖东白塘植物园（金鸡湖东岸绿地）
+      // 注：圆融时代广场/月光码头（金鸡湖东岸、真实坐标 120.7005–120.7015）在 geo 水面层里 landFrac≈0，落地会被丢弃，故本批不写。
+      // —— 唯亭·正仪 / 昆山 ——
+      at(31.3620, 120.8700, { id: 'sz_zhengyi', name: '正仪老街', w: 400, d: 120, kind: 'traditional' }),          // 昆山正仪（并蒂莲、青团）
+      at(31.3870, 120.9640, { id: 'sz_tinglin', name: '亭林公园', w: 400, d: 350, kind: 'traditional' }),          // 昆山玉峰山下，顾炎武纪念（亭林先生）
+      at(31.3130, 121.0000, { id: 'sz_qiandeng', name: '千灯古镇', w: 500, d: 400, kind: 'traditional' }),         // 昆山千灯（顾炎武故居、秦峰塔）
+      at(31.1160, 120.8540, { id: 'sz_zhouzhuang', name: '周庄古镇', w: 700, d: 600, kind: 'traditional' }),       // 昆山周庄，江南六大古镇之首（原 120.8500 格 landFrac 0.38 偏水→东移到 0.88 以上）
+      at(31.1600, 120.9010, { id: 'sz_jinxi', name: '锦溪古镇', w: 600, d: 500, kind: 'traditional' }),            // 昆山锦溪，“中国民间博物馆之乡”
+      at(31.4420, 120.8600, { id: 'sz_bacheng', name: '巴城老街', w: 400, d: 120, kind: 'traditional' }),          // 昆山巴城，阳澄湖大闸蟹原产地
+      at(31.4050, 120.9200, { id: 'sz_duke', name: '昆山杜克大学', w: 500, d: 400, year: 2013, kind: 'campus' }),  // 昆山阳澄湖科技园，2013 年设立
+      at(31.3800, 120.9500, { id: 'sz_kssport', name: '昆山市体育中心', w: 380, d: 320, kind: 'stadium' }),        // 昆山开发区体育中心
+      at(31.3860, 120.9930, { id: 'sz_huiju', name: '慧聚寺', w: 260, d: 220, kind: 'temple' }),                   // 昆山开发区，重建的妈祖庙（华东最大妈祖庙）
+      // —— 常熟 ——
+      at(31.6350, 120.6900, { id: 'sz_shanghu', name: '尚湖', w: 800, d: 700, kind: 'campus' }),                   // 虞山南麓尚湖风景区（姜尚垂钓传说）
+      at(31.6560, 120.7100, { id: 'sz_xingfu', name: '兴福寺', w: 200, d: 180, kind: 'temple' }),                  // 虞山北麓破山兴福寺（南齐古刹）
+      at(31.6500, 120.7400, { id: 'sz_csmuseum', name: '常熟博物馆', w: 160, d: 140, kind: 'gallery' }),           // 常熟古城
+      at(31.6480, 120.7420, { id: 'sz_yanyuan', name: '燕园', w: 120, d: 120, kind: 'traditional' }),              // 常熟燕园（清代蒋元枢所筑，江南名园）
+      at(31.6480, 120.7620, { id: 'sz_csit', name: '常熟理工学院', w: 600, d: 500, year: 1958, kind: 'campus' }),  // 常熟理工学院（原苏州师专，1958 年创办）
+      // —— 张家港 ——
+      at(31.8300, 120.6300, { id: 'sz_fenghuang', name: '凤凰山', w: 400, d: 350, kind: 'campus' }),               // 凤凰镇凤凰山景区（河阳山歌、永庆寺）
+      at(31.8680, 120.5580, { id: 'sz_zjgpark', name: '张家港公园', w: 300, d: 250, kind: 'campus' }),             // 杨舍城中公园
+      at(31.8700, 120.6500, { id: 'sz_yonglian', name: '永联小镇', w: 400, d: 300, kind: 'box' }),                 // 南丰镇永联村（全国文明村、永钢集团）
+      at(31.8420, 120.5550, { id: 'sz_liangfeng', name: '梁丰生态园', w: 400, d: 300, kind: 'campus' }),           // 张家港城南生态园
+      at(31.8720, 120.5430, { id: 'sz_shazhou', name: '沙洲公园', w: 250, d: 200, kind: 'campus' }),               // 杨舍老城沙洲公园
+      // —— 吴江（松陵）/ 盛泽 / 汾湖 ——
+      at(31.1560, 120.6430, { id: 'sz_chuihong', name: '垂虹桥遗址', w: 300, d: 60, kind: 'traditional' }),        // 松陵垂虹桥（宋代长桥，“江南第一长桥”残存）
+      at(31.1300, 120.6000, { id: 'sz_dongtaihu', name: '东太湖生态园', w: 600, d: 400, kind: 'campus' }),         // 吴江东太湖岸线生态公园
+      at(31.1600, 120.6520, { id: 'sz_songling', name: '松陵公园', w: 250, d: 200, kind: 'campus' }),              // 吴江老城松陵公园
+      at(31.1700, 120.6600, { id: 'sz_jingsi', name: '静思园', w: 200, d: 160, kind: 'traditional' }),             // 吴江静思园（当代私家园林，藏灵璧巨石）
+      at(31.1300, 120.6150, { id: 'sz_wjisport', name: '苏州湾体育中心', w: 400, d: 340, year: 2021, kind: 'stadium' }),   // 吴江太湖新城，2021 年启用
+      at(30.9020, 120.6520, { id: 'sz_mulanzhou', name: '目澜洲', w: 200, d: 180, kind: 'campus' }),               // 盛泽目澜洲公园（绸都旧园）
+      at(30.9100, 120.6550, { id: 'sz_oscmarket', name: '中国东方丝绸市场', w: 400, d: 300, kind: 'box' }),        // 盛泽，全国最大丝绸面料交易市场
+      at(31.0399, 120.8464, { id: 'sz_lili', name: '黎里古镇', w: 500, d: 400, kind: 'traditional' }),             // 汾湖黎里（柳亚子故居、驳岸廊棚；原 120.8480 落水→西移 1 格到 landFrac 0.88）
+      at(31.0300, 120.9200, { id: 'sz_luxu', name: '芦墟古镇', w: 400, d: 300, kind: 'traditional' }),             // 汾湖芦墟（跨街楼、汾湖西岸；落在外围区，见报告）
+      // —— 太湖东岸（镇湖）——
+      at(31.3150, 120.4180, { id: 'sz_cixiu', name: '中国刺绣艺术馆', w: 160, d: 140, kind: 'gallery' }),          // 镇湖，苏绣发源地（近图西界 120.415，余 0.1 格）
+      at(31.3060, 120.4300, { id: 'sz_taihuwet', name: '苏州太湖国家湿地公园', w: 700, d: 600, kind: 'campus' }),  // 镇湖—东渚太湖岸边湿地
     ],
     // 重要设施（见 facility.js）：位置与启用/停用年份为史实参考（位置近似）；规模均为估算。
     // 枢纽 pax：市内接驳出行（万人次/日）；w：占全市该目的出行吸引的比例（同目的合计 ≤0.5）。

@@ -950,29 +950,31 @@
     const fogging = function (i, j) {
       if (i < 0 || j < 0 || i >= W || j >= H) return false;
       const c = j * W + i, k = city.region[c];
-      return !(city.regionOpen[k] || city.regions[k].scenic || city.lu[c] === LU.WATER);
+      // 未开放区整片（含水面）一起盖雾：避免「陆地白雾 / 水面蓝」在河湖水网区拼成方格棋盘
+      return !(city.regionOpen[k] || city.regions[k].scenic);
     };
-    // 边缘渐隐：雾的边界不再是硬格边，而是 4 圈渐薄带（向外 0.40→0.62→0.82→0.95，云心 1.0）+ 0.5 格外溢，
-    // 视觉上变成「雾从外围漫上来、越往里越厚」，约 1 km 的柔和过渡，消除区域多边形直边切痕（2026-10-29 下午）。
-    const OH = 0.5;                                   // 雾向开放区外溢半格，柔化硬边
-    const MUL = [0.40, 0.62, 0.82, 0.95, 1.0];        // ring1..4 + 云心
-    const lock = new Path2D(), lr = [new Path2D(), new Path2D(), new Path2D(), new Path2D()];
-    let anyLock = false, anyR = [false, false, false, false];
+    // 边缘渐隐：雾的边界用 6 圈渐薄带（向外 ~0.20→0.96，云心 1.0）+ 0.85 格外溢，
+    // 让雾在开放区边界处缓慢渗入、显著软化区域多边形直边切痕（2026-11-01 由 4 圈加宽到 6 圈）。
+    const OH = 0.85;                                   // 雾向外溢 0.85 格，柔化硬边
+    const NR = 6;                                      // 渐隐圈数
+    const MUL = [0.20, 0.36, 0.54, 0.72, 0.87, 0.96, 1.0];   // ring1..6 + 云心
+    const lock = new Path2D(), lr = []; for (let r0 = 0; r0 < NR; r0++) lr.push(new Path2D());
+    let anyLock = false; const anyR = new Array(NR).fill(false);
     for (let j = j0; j < j1; j++) for (let i = i0; i < i1; i++) {
       if (!fogging(i, j)) continue;
-      // 找最近的非雾格距离（1..4）→ 落在哪一档渐隐环；>4 则云心
+      // 找最近的非雾格距离（1..NR）→ 落在哪一档渐隐环；>NR 则云心
       let rd = 0;
-      for (let d = 1; d <= 4; d++) { if (!fogging(i - d, j) || !fogging(i + d, j) || !fogging(i, j - d) || !fogging(i, j + d)) { rd = d; break; } }
+      for (let d = 1; d <= NR; d++) { if (!fogging(i - d, j) || !fogging(i + d, j) || !fogging(i, j - d) || !fogging(i, j + d)) { rd = d; break; } }
       const p = rd === 0 ? lock : lr[rd - 1];
       p.rect(i - px - OH, j - px - OH, 1 + 2 * px + 2 * OH, 1 + 2 * px + 2 * OH);
       anyLock = true; if (rd > 0) anyR[rd - 1] = true;
     }
     if (anyLock) {
-      // 只覆盖陆地：沿岸的格按真实岸线裁掉水面
-      const land = new Path2D(); land.rect(X0 - 1, Y0 - 1, X1 - X0 + 2, Y1 - Y0 + 2); land.addPath(wpth);
-      // 由外向内铺（低 mul 先、高 mul 后，重叠处以更靠云心的更高浓度覆盖）：ring1→ring4→云心
-      for (let ring = 0; ring <= 4; ring++) {
-        const p = ring === 0 ? (anyR[0] ? lr[0] : null) : ring === 4 ? (anyLock ? lock : null) : (anyR[ring - 1] ? lr[ring - 1] : null);
+      // 未开放区整片盖雾（不再按岸线裁掉水面），让雾成为连续云毯而非棋盘格
+      const land = new Path2D(); land.rect(X0 - 1, Y0 - 1, X1 - X0 + 2, Y1 - Y0 + 2);
+      // 由外向内铺（低 mul 先、高 mul 后）：ring1→…→ring6→云心
+      for (let ring = 0; ring <= NR; ring++) {
+        const p = ring === NR ? (anyLock ? lock : null) : (anyR[ring] ? lr[ring] : null);
         if (!p) continue;
         ctx.save();
         ctx.clip(p);

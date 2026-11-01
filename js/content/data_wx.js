@@ -80,6 +80,32 @@
       at(31.5219, 120.2704, { id: 'wx_liyuan', name: '蠡园', w: 190, d: 155, year: 1927, kind: 'scenic' }),
       at(31.5400, 120.3100, { id: 'wx_qingmingqiao', name: '清名桥（古运河）', w: 220, d: 175, year: 1600, kind: 'traditional' }),
       at(31.5780, 120.3050, { id: 'wx_donglin', name: '东林书院', w: 180, d: 150, year: 1111, kind: 'traditional' }),
+      // —— 补充地标（社区补充；坐标均经 tests/headless/probe-cell.mjs 复核 landFrac ≥ 0.5）——
+      // 梁溪（老城·惠山）
+      at(31.5680, 120.3020, { id: 'wx_museum', name: '无锡博物院', w: 180, d: 140, year: 2008, kind: 'museum' }),
+      at(31.5745, 120.2985, { id: 'wx_xuefucheng', name: '薛福成故居', w: 120, d: 100, year: 1894, kind: 'traditional' }),
+      at(31.5772, 120.2655, { id: 'wx_jichang', name: '寄畅园', w: 200, d: 170, year: 1527, kind: 'traditional' }),   // 明嘉靖年间建，江南名园
+      at(31.5800, 120.2645, { id: 'wx_huishan', name: '惠山古镇（祠堂群）', w: 320, d: 260, year: 1573, kind: 'traditional' }),
+      // 滨湖（蠡湖·太湖新城）
+      // 原草案 31.5245,120.2760 落蠡湖水域（landFrac=0.19）；改用 probe 给出的最近陆地
+      at(31.5241, 120.2730, { id: 'wx_theatre', name: '无锡大剧院', w: 160, d: 120, year: 2012, kind: 'concert' }),
+      at(31.4900, 120.3000, { id: 'wx_jiangnan', name: '江南大学', w: 700, d: 600, year: 2001, kind: 'campus' }),   // 2001 年蠡湖校区启用
+      at(31.5010, 120.2900, { id: 'wx_changguangxi', name: '长广溪湿地公园', w: 500, d: 400, year: 2007, kind: 'scenic' }),
+      at(31.5470, 120.2450, { id: 'wx_rongxiang', name: '荣巷历史街区', w: 300, d: 200, year: 1915, kind: 'traditional' }),   // 荣氏家族故里，近代建筑群
+      // 太湖沿岸（马山·大浮，图内属外围片区）
+      at(31.4932, 120.1045, { id: 'wx_sanguo', name: '三国城', w: 400, d: 300, year: 1994, kind: 'themepark' }),   // 央视无锡影视基地
+      at(31.4952, 120.0935, { id: 'wx_shuihu', name: '水浒城', w: 350, d: 280, year: 1996, kind: 'themepark' }),
+      at(31.4285, 120.1190, { id: 'wx_nianhua', name: '拈花湾', w: 500, d: 400, year: 2015, kind: 'traditional' }),
+      // 江阴·华士
+      at(31.8280, 120.4260, { id: 'wx_huaxi', name: '华西龙希国际大酒店', w: 60, d: 60, year: 2011, kind: 'skyscraper', h: 328 }),
+      // 锡山·新吴
+      at(31.5345, 120.4200, { id: 'wx_taibo', name: '泰伯庙', w: 140, d: 120, year: 154, kind: 'temple' }),   // 东汉永兴二年始建，梅村
+      at(31.5210, 120.4780, { id: 'wx_hongshan', name: '鸿山遗址博物馆', w: 200, d: 160, year: 2008, kind: 'museum' }),
+      at(31.4600, 120.4740, { id: 'wx_dangkou', name: '荡口古镇', w: 350, d: 280, year: 1500, kind: 'traditional' }),   // 明代成形，2010 年修复开放
+      // 江阴（远郊）
+      at(31.9080, 120.2700, { id: 'wx_xingguo', name: '兴国塔', w: 50, d: 50, year: 1047, kind: 'pagoda', h: 42 }),
+      at(31.8480, 120.2780, { id: 'wx_huangshan', name: '黄山炮台', w: 200, d: 160, year: 1860, kind: 'memorial' }),   // 江阴要塞
+      at(31.7300, 120.3060, { id: 'wx_xuxiake', name: '徐霞客故居', w: 150, d: 120, year: 1601, kind: 'traditional' }),   // 马镇，明万历年间建
     ],
 
     // —— 重要设施（草案坐标，待 probe 复核）——
