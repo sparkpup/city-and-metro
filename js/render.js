@@ -3335,6 +3335,9 @@
       for (let k = 0; k < D.landmarks.length; k++) {
         if (!city.landmarkOn[k]) continue;
         const lm = D.landmarks[k];
+        // 次要地点（商场/公园/学校/景区/乐园）放大到一定级别(z>=26)才显示名字，低缩放保持界面简洁；
+        // 标志性地标（传统/寺庙/体育场/塔/纪念馆/博物馆等）始终显示。
+        if (z < 26 && (lm.kind === 'mall' || lm.kind === 'park' || lm.kind === 'campus' || lm.kind === 'scenic' || lm.kind === 'themepark')) continue;
         if (lm.x < v.x0 || lm.x > v.x1 || lm.y < v.y0 || lm.y > v.y1) continue;
         const h = this.tEase > 0.5 && this.bFade > 0.5 ? (lm.h ? lm.h * EX : 34 * EX * 1.6) : 0;
         const p = this.P(lm.x, lm.y, h);
