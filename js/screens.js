@@ -232,7 +232,7 @@
       const progress = games.length ? games.length + ' 个进度 · 最近 ' + (latest ? fmtDate(latest) : '—') : (mp.tutorial ? '还没有开始教程' : '还没有进度');
       return h('div', { class: 'msel-dwrap' },
         h('div', { class: 'msel-scroll' }, hero,
-          block('info', 'b-blue', '城市概况', [h('p', { class: 'msel-intro' }, mp.intro || mp.desc), facts], 'intro'),
+          block('info', 'b-blue', '城市概况', [h('p', { class: 'msel-intro' }, (curStart && (curStart.desc || curStart.intro)) || mp.intro || mp.desc), facts], 'intro'),
           block('sparkle', 'b-violet', '地图特色', feats),
           block('calYear', 'b-orange', '大事年表', tl)),
         h('div', { class: 'msel-actbar' }, h('div', { class: 'msel-acth' }, h('b', null, mp.tutorial ? '开始教程' : '开始规划 ' + (mp.name || '')), h('span', { class: 'tiny muted' }, ic('save', 12), progress)), acts));
