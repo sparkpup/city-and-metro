@@ -275,6 +275,101 @@
       // —— 太湖东岸（镇湖）——
       at(31.3150, 120.4180, { id: 'sz_cixiu', name: '中国刺绣艺术馆', w: 160, d: 140, kind: 'gallery' }),          // 镇湖，苏绣发源地（近图西界 120.415，余 0.1 格）
       at(31.3060, 120.4300, { id: 'sz_taihuwet', name: '苏州太湖国家湿地公园', w: 700, d: 600, kind: 'campus' }),  // 镇湖—东渚太湖岸边湿地
+
+      // —— yuanqu_w 补充（OSM 公园/景点实测，原有 7 个）——
+      at(31.31601, 120.65748, { name: '中央公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31238, 120.66877, { name: '星海公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31135, 120.67996, { name: '金鸡湖景区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.32172, 120.67723, { name: '香樟园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.32636, 120.69734, { name: '红枫林', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— yuanqu_e 补充（OSM 公园/景点实测，原有 1 个）——
+      at(31.33141, 120.70278, { name: '和众公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31159, 120.72164, { name: '中塘公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.30551, 120.72497, { name: '斜塘河公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.29554, 120.71091, { name: '观棠北区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.29743, 120.71426, { name: '邻瑞足球公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— dushu 补充（OSM 公园/景点实测，原有 4 个）——
+      at(31.25289, 120.72041, { name: '月墅公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25426, 120.71561, { name: '独墅湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.26445, 120.7136, { name: '半月湾一棵树营地', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— shishan 补充（OSM 公园/景点实测，原有 4 个）——
+      at(31.28698, 120.54379, { name: '玉山公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.29379, 120.54755, { name: '索山公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.3043, 120.53507, { name: '新区公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— kejicheng 补充（OSM 公园/景点实测，原有 2 个）——
+      at(31.32901, 120.42856, { name: '苏州高新区展示馆', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— xusheng 补充（OSM 公园/景点实测，原有 3 个）——
+      at(31.35303, 120.50917, { name: '大白荡城市生态公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— wuzhong 补充（OSM 公园/景点实测，原有 5 个）——
+      at(31.24042, 120.41864, { name: '吴中区经济管理安全文化主题公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25927, 120.45442, { name: '采香泾生态园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25421, 120.49181, { name: '苏州梦幻乐园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.24566, 120.59276, { name: '石湖景区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.24086, 120.57755, { name: '上方山森林动物世界', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.27568, 120.62819, { name: '苏苑公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.24285, 120.61197, { name: '范蠡公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— mudu 补充（OSM 公园/景点实测，原有 6 个）——
+      at(31.25849, 120.51171, { name: '木渎公园 Mudu Park', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.27419, 120.51616, { name: '金山公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25025, 120.51093, { name: '榜眼府第', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25303, 120.50871, { name: '古松园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25354, 120.50703, { name: '虹饮山房', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— xiangcheng 补充（OSM 公园/景点实测，原有 5 个）——
+      at(31.36849, 120.61014, { name: '乾塘公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.37449, 120.5903, { name: '书香人才公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.37069, 120.60985, { name: '活力体育公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.39919, 120.61831, { name: '元和公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.38088, 120.58683, { name: '黄桥公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.40555, 120.63919, { name: '澄阳街桂花公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— xiangcheng_n 补充（OSM 公园/景点实测，原有 0 个）——
+      at(31.42274, 120.44453, { name: '御亭法治文化公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— wujiang 补充（OSM 公园/景点实测，原有 6 个）——
+      at(31.11967, 120.63549, { name: '芦荡湖湿地公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.15896, 120.64467, { name: '垂虹景区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— tongli 补充（OSM 公园/景点实测，原有 2 个）——
+      at(31.16822, 120.81579, { name: '同里湿地公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— fenhu 补充（OSM 公园/景点实测，原有 2 个）——
+      at(31.03754, 120.82275, { name: '了凡文化公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.01148, 120.82868, { name: '汾湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.99662, 120.70946, { name: '黎里公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— weiting 补充（OSM 公园/景点实测，原有 4 个）——
+      at(31.28093, 120.72584, { name: '广思林', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.33418, 120.73402, { name: '白塘植物园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31816, 120.74134, { name: '方洲公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31386, 120.73041, { name: '南施公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.29957, 120.72829, { name: '荷花公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.30035, 120.74011, { name: '星塘街公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.33862, 120.76806, { name: '东沙湖生态公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.31018, 120.75512, { name: '锦溪公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— kunshan 补充（OSM 公园/景点实测，原有 8 个）——
+      at(31.28639, 120.92861, { name: '张浦镇体育公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.24706, 120.99295, { name: '大唐生态园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.2651, 120.99683, { name: '顾炎武故居', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.25242, 121.01769, { name: '千灯中心公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— changshu 补充（OSM 公园/景点实测，原有 9 个）——
+      at(31.53928, 120.67213, { name: '心乐园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.5041, 120.65855, { name: '隆力奇东方蛇园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.50644, 120.97094, { name: '蒋巷生态园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— zhangjiagang 补充（OSM 公园/景点实测，原有 9 个）——
+      at(31.84797, 120.53045, { name: '暨阳湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.83968, 120.61173, { name: '黄泗浦生态公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.84436, 120.71348, { name: '江南农耕文化园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— shengze 补充（OSM 公园/景点实测，原有 3 个）——
+      at(30.9123, 120.60924, { name: '潜龙渠公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.89654, 120.65409, { name: '目澜洲公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.92109, 120.6712, { name: '镜湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      // —— outer 补充（OSM 公园/景点实测，原有 1 个）——
+      at(31.32892, 120.42412, { name: '彩石湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.42442, 120.7814, { name: '云杉湖公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.44269, 120.79826, { name: '三元府第', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.01611, 120.48097, { name: '浦江源 生态半岛', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.99969, 120.79197, { name: '穿堤绿道', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.99887, 120.79962, { name: '汾湖风景区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(30.99863, 120.95695, { name: '沉香生态村', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.078, 120.90284, { name: '红楼梦 上海', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.06046, 120.99238, { name: '青西郊野公园', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.08409, 121.04504, { name: '天祥院南区', w: 90, d: 90, year: null, kind: 'scenic' }),
+      at(31.1125, 121.05632, { name: '珠溪园', w: 90, d: 90, year: null, kind: 'scenic' }),
     ],
     // 重要设施（见 facility.js）：位置与启用/停用年份为史实参考（位置近似）；规模均为估算。
     // 枢纽 pax：市内接驳出行（万人次/日）；w：占全市该目的出行吸引的比例（同目的合计 ≤0.5）。
